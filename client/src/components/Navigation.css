@@ -1,0 +1,342 @@
+.navigation {
+  background: white;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.navigation.scrolled {
+  background: white;
+  padding: 0.5rem 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.nav-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  position: relative;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  padding: 0.5rem 1rem;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-logo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 16px;
+}
+
+.nav-logo:hover::before {
+  opacity: 1;
+}
+
+.nav-logo:hover {
+  transform: scale(1.05) translateY(-2px);
+}
+
+.logo-icon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(5deg); }
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.logo-main {
+  font-size: 1.6rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.logo-sub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(102, 126, 234, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: -2px;
+}
+
+.nav-menu {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0.5rem;
+  background: none;
+  border-radius: 20px;
+  padding: 0.5rem;
+}
+
+.nav-item {
+  margin: 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(74, 85, 104, 0.9);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 15px;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 15px;
+}
+
+.nav-link:hover::before,
+.nav-link.active::before,
+.nav-link:active::before {
+  opacity: 1;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.nav-link:hover span,
+.nav-link:hover .nav-icon,
+.nav-link.active span,
+.nav-link.active .nav-icon {
+  color: white !important;
+  z-index: 10 !important;
+}
+
+.nav-link:active {
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Sử dụng nhiều selector để đảm bảo màu trắng được áp dụng */
+.nav-link:active,
+.nav-link:active span,
+.nav-link:active .nav-icon,
+.nav-link:focus,
+.nav-link:focus span,
+.nav-link:focus .nav-icon {
+  color: white !important;
+}
+
+.nav-link span {
+  position: relative;
+  z-index: 2;
+  transition: color 0.1s ease;
+}
+
+.nav-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+  position: relative;
+  z-index: 2;
+  transition: color 0.1s ease;
+  display: inline-block;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Đảm bảo tất cả phần tử con chuyển màu trắng khi active hoặc focus */
+.nav-link:active *,
+.nav-link:focus * {
+  color: white !important;
+}
+
+/* Thêm mousedown event để bắt khi bấm chuột */
+.nav-link:active:hover,
+.nav-link:active:hover *,
+.nav-link:focus:hover,
+.nav-link:focus:hover * {
+  color: white !important;
+}
+
+
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0 1rem;
+  }
+  
+  .nav-menu {
+    background: none;
+    backdrop-filter: none;
+    border: none;
+    padding: 0;
+    gap: 0.25rem;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .nav-icon {
+    font-size: 1rem;
+  }
+  
+  .logo-main {
+    font-size: 1.4rem;
+  }
+  
+  .logo-icon {
+    font-size: 1.8rem;
+  }
+  
+
+}
+
+@media (max-width: 480px) {
+  .nav-menu {
+    position: fixed;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(30px);
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    transform: translateY(-100%);
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Override mạnh cho active state - đặt ở cuối để có priority cao nhất */
+a.nav-link:active,
+a.nav-link:active span,
+a.nav-link:active .nav-icon,
+.nav-link:active,
+.nav-link:active span,
+.nav-link:active .nav-icon {
+  color: white !important;
+  text-decoration: none !important;
+}
+
+/* Thêm CSS cho trạng thái khi đang nhấn chuột */
+a.nav-link:active::before,
+.nav-link:active::before {
+  opacity: 1 !important;
+}
+
+/* CSS cho class clicking được add bởi JavaScript */
+.nav-link.clicking {
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.nav-link.clicking::before {
+  opacity: 1 !important;
+}
+
+/* Đảm bảo text luôn ở trên background với z-index cao */
+.nav-link.clicking span,
+.nav-link.clicking .nav-icon {
+  color: white !important;
+  position: relative;
+  z-index: 10 !important;
+  text-shadow: none !important;
+}
+
+/* Override tất cả màu có thể cho clicking state */
+.nav-link.clicking *,
+.nav-link.clicking span *,
+.nav-link.clicking .nav-icon * {
+  color: white !important;
+  fill: white !important;
+}
+
+/* Thêm override cho tất cả pseudo-elements */
+.nav-link.clicking::after,
+.nav-link.clicking span::after,
+.nav-link.clicking .nav-icon::after {
+  color: white !important;
+}
+
+/* Đảm bảo không có màu nào override được */
+a.nav-link.clicking,
+a.nav-link.clicking:visited,
+a.nav-link.clicking:link {
+  color: white !important;
+}
+
+a.nav-link.clicking span,
+a.nav-link.clicking .nav-icon {
+  color: white !important;
+  z-index: 999 !important;
+}
+
+/* CSS với specificity cực cao - đặt ở cuối cùng */
+body .navigation .nav-menu .nav-item .nav-link.clicking,
+body .navigation .nav-menu .nav-item .nav-link.clicking span,
+body .navigation .nav-menu .nav-item .nav-link.clicking .nav-icon {
+  color: white !important;
+  text-decoration: none !important;
+  background-color: transparent !important;
+}
+
+/* Đảm bảo emoji icons cũng hiển thị đúng */
+.nav-link.clicking .nav-icon {
+  opacity: 1 !important;
+  filter: none !important;
+}

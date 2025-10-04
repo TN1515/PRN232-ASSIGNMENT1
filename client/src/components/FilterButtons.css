@@ -1,0 +1,144 @@
+.filter-buttons {
+  margin-bottom: 2rem;
+  animation: slideUp 0.6s ease-out 0.1s both;
+}
+
+.filter-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  padding: 1.5rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+}
+
+.filter-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.filter-options {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.filter-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 25px;
+}
+
+.filter-btn:hover::before {
+  opacity: 0.7;
+}
+
+.filter-btn.active::before {
+  opacity: 1;
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.filter-btn.active {
+  font-weight: 700;
+}
+
+.filter-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+/* Pulse animation for active filter */
+.filter-btn.active {
+  animation: filterPulse 2s ease-in-out infinite;
+}
+
+@keyframes filterPulse {
+  0%, 100% { 
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+  50% { 
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filter-container {
+    padding: 1rem;
+  }
+  
+  .filter-options {
+    gap: 0.5rem;
+  }
+  
+  .filter-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+  }
+  
+  .filter-label {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-buttons {
+    margin-bottom: 1.5rem;
+  }
+  
+  .filter-container {
+    padding: 0.75rem;
+  }
+  
+  .filter-options {
+    gap: 0.4rem;
+  }
+  
+  .filter-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .filter-label {
+    font-size: 0.9rem;
+  }
+}

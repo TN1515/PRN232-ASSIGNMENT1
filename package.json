@@ -1,0 +1,25 @@
+{
+  "name": "ecommerce-app",
+  "version": "1.0.0",
+  "description": "E-commerce platform with ASP.NET Core API and React frontend",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:client\"",
+    "dev:api": "cd ECommerceApp.API && dotnet run",
+    "dev:client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "build:api": "cd ECommerceApp.API && dotnet build",
+    "start": "cd ECommerceApp.API && dotnet run --environment Production"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "keywords": [
+    "ecommerce",
+    "react",
+    "aspnetcore",
+    "clothing",
+    "webapi"
+  ],
+  "author": "",
+  "license": "MIT"
+}
