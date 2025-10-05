@@ -7,14 +7,19 @@ const getApiBaseUrl = () => {
   if (window.location.hostname.includes('vercel.app') || 
       window.location.hostname.includes('netlify.app') ||
       process.env.NODE_ENV === 'production') {
-    return process.env.REACT_APP_API_URL_PRODUCTION || 'https://prn232-assignment1-kcez.onrender.com';
+    return process.env.REACT_APP_API_URL_PRODUCTION || 'https://prn232-assignment1-kcez.onrender.com/swagger/';
   }
   
   // Local development
   return process.env.REACT_APP_API_URL_LOCAL || 'http://localhost:5000/api';
 };
 
-const API_BASE_URL = getApiBaseUrl();
+const RAW_API_BASE_URL = getApiBaseUrl();
+
+// Convert swagger URL to API URL if needed
+const API_BASE_URL = RAW_API_BASE_URL.includes('/swagger/') 
+  ? RAW_API_BASE_URL.replace('/swagger/', '/api')
+  : RAW_API_BASE_URL;
 
 // Helper function to build API endpoint
 const getApiEndpoint = (path: string) => {
@@ -30,6 +35,7 @@ const getApiEndpoint = (path: string) => {
 console.log('=== API Configuration ===');
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Hostname:', window.location.hostname);
+console.log('Raw Base URL:', RAW_API_BASE_URL);
 console.log('API Base URL:', API_BASE_URL);
 console.log('Local API URL:', process.env.REACT_APP_API_URL_LOCAL);
 console.log('Production API URL:', process.env.REACT_APP_API_URL_PRODUCTION);
