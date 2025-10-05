@@ -53,10 +53,11 @@ builder.Services.AddCors(options =>
         {
             if (builder.Environment.IsDevelopment())
             {
-                // Development - allow localhost
-                policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
+                // Development - allow localhost with credentials
+                policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000")
                       .AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .AllowAnyMethod()
+                      .AllowCredentials();
             }
             else
             {

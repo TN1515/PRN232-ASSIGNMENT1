@@ -3,40 +3,52 @@ import { Product } from '../types/Product';
 
 // Smart API URL detection with fallback options
 const getApiBaseUrl = () => {
-  // Check if we're running on Vercel (production)
-  if (window.location.hostname.includes('vercel.app') || 
-      window.location.hostname.includes('netlify.app') ||
-      process.env.NODE_ENV === 'production') {
+  // Check if we're running in production environment
+  if (process.env.NODE_ENV === 'production' || 
+      window.location.hostname.includes('vercel.app') || 
+      window.location.hostname.includes('netlify.app')) {
     
     // Try multiple production URLs in order of preference
     const productionUrls = [
       process.env.REACT_APP_API_URL_PRODUCTION,
-      'https://prn232-assignment1-kcez.onrender.com/swagger',
+      'https://prn232-assignment1-kcez.onrender.com/api',
       'https://prn232-assignment1-kcez.onrender.com'
     ].filter(Boolean);
     
-    return productionUrls[0] || 'https://prn232-assignment1-kcez.onrender.com/swagger';
+    return productionUrls[0] || 'https://prn232-assignment1-kcez.onrender.com/api';
   }
   
-  // Local development
-  return process.env.REACT_APP_API_URL_LOCAL || 'http://localhost:5000/api';
+  // Local development - ensure correct URL
+  return process.env.REACT_APP_API_URL_LOCAL || 'http://localhost:5000';
 };
 
 const RAW_API_BASE_URL = getApiBaseUrl();
 
-// Convert swagger URL to API URL - handle both /swagger and /swagger/
-const API_BASE_URL = RAW_API_BASE_URL.includes('/swagger') 
-  ? RAW_API_BASE_URL.replace(/\/swagger\/?$/, '/api')
-  : RAW_API_BASE_URL;
+// Ensure API base URL is correctly formatted
+let API_BASE_URL = RAW_API_BASE_URL;
+
+// Clean up swagger URLs
+if (API_BASE_URL.includes('/swagger')) {
+  API_BASE_URL = API_BASE_URL.replace(/\/swagger\/?$/, '/api');
+}
+
+// Ensure /api suffix for base URLs that need it
+if (!API_BASE_URL.includes('/api') && !API_BASE_URL.endsWith('/')) {
+  API_BASE_URL = API_BASE_URL + '/api';
+}
 
 // Helper function to build API endpoint
 const getApiEndpoint = (path: string) => {
+  // Clean path
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  
   // If base URL already includes /api, don't add it again
   if (API_BASE_URL.includes('/api')) {
-    return path;
+    return cleanPath;
   }
-  // If base URL doesn't include /api, add it to the path
-  return `/api${path}`;
+  
+  // Add /api prefix to path
+  return `/api${cleanPath}`;
 };
 
 // Debug logging
@@ -77,20 +89,34 @@ api.interceptors.request.use(
 // Response interceptor for logging
 api.interceptors.response.use(
   (response) => {
-    console.log('Response received:', {
+    console.log('✓ Response received:', {
       status: response.status,
       statusText: response.statusText,
-      data: response.data,
+      url: response.config?.url,
+      data: typeof response.data === 'object' ? 'Object' : response.data,
     });
     return response;
   },
   (error) => {
-    console.error('Response error:', {
+    console.error('✗ Response error:', {
       message: error.message,
+      code: error.code,
       status: error.response?.status,
       statusText: error.response?.statusText,
       data: error.response?.data,
+      url: error.config?.url,
+      stack: error.stack?.split('\n')[0],
     });
+    
+    // Provide helpful error messages for common CORS issues
+    if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+      console.error('🔥 NETWORK ERROR - Possible causes:');
+      console.error('1. Backend server is not running');
+      console.error('2. CORS configuration issue');
+      console.error('3. Invalid API URL');
+      console.error('4. Firewall blocking request');
+    }
+    
     return Promise.reject(error);
   }
 );
