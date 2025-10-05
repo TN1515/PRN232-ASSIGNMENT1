@@ -51,9 +51,20 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            if (builder.Environment.IsDevelopment())
+            {
+                // Development - allow localhost
+                policy.WithOrigins("http://localhost:3000", "http://localhost:5173")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            }
+            else
+            {
+                // Production - allow any origin for now, can be restricted later
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader() 
+                      .AllowAnyMethod();
+            }
         });
 });
 

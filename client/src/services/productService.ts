@@ -1,7 +1,35 @@
 import axios from 'axios';
 import { Product } from '../types/Product';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Smart API URL detection
+const getApiBaseUrl = () => {
+  // Check if we're running on Vercel (production)
+  if (window.location.hostname.includes('vercel.app') || 
+      window.location.hostname.includes('netlify.app') ||
+      process.env.NODE_ENV === 'production') {
+    return process.env.REACT_APP_API_URL_PRODUCTION || 'https://prn232-assignment1-kcez.onrender.com';
+  }
+  
+  // Local development
+  return process.env.REACT_APP_API_URL_LOCAL || 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Helper function to build API endpoint
+const getApiEndpoint = (path: string) => {
+  // If base URL already includes /api, don't add it again
+  if (API_BASE_URL.includes('/api')) {
+    return path;
+  }
+  // If base URL doesn't include /api, add it to the path
+  return `/api${path}`;
+};
+
+// Debug logging
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Hostname:', window.location.hostname);
+console.log('API Base URL:', API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,7 +53,7 @@ interface ProductsResponse {
 export const productService = {
   // Get all products (legacy method for compatibility)
   getAllProducts: async (): Promise<Product[]> => {
-    const response = await api.get('/products');
+    const response = await api.get(getApiEndpoint('/products'));
     // Handle both old and new response format
     return Array.isArray(response.data) ? response.data : response.data.products;
   },
@@ -46,29 +74,29 @@ export const productService = {
     if (params.page) queryParams.append('page', params.page.toString());
     if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
     
-    const response = await api.get(`/products?${queryParams.toString()}`);
+    const response = await api.get(getApiEndpoint(`/products?${queryParams.toString()}`));
     return response.data;
   },
 
   // Get single product
   getProduct: async (id: number): Promise<Product> => {
-    const response = await api.get(`/products/${id}`);
+    const response = await api.get(getApiEndpoint(`/products/${id}`));
     return response.data;
   },
 
   // Create product
   createProduct: async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> => {
-    const response = await api.post('/products', product);
+    const response = await api.post(getApiEndpoint('/products'), product);
     return response.data;
   },
 
   // Update product
   updateProduct: async (id: number, product: Omit<Product, 'createdAt' | 'updatedAt'>): Promise<void> => {
-    await api.put(`/products/${id}`, product);
+    await api.put(getApiEndpoint(`/products/${id}`), product);
   },
 
   // Delete product
   deleteProduct: async (id: number): Promise<void> => {
-    await api.delete(`/products/${id}`);
+    await api.delete(getApiEndpoint(`/products/${id}`));
   },
 };

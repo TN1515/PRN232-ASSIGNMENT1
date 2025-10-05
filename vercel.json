@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd client && npm install && npm run build",
+  "outputDirectory": "client/build",
+  "framework": null,
+  "env": {
+    "REACT_APP_API_URL_LOCAL": "http://localhost:5000/api",
+    "REACT_APP_API_URL_PRODUCTION": "https://prn232-assignment1-kcez.onrender.com"
+  }
+}

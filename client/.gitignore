@@ -8,8 +8,8 @@
 # testing
 /coverage
 
-# production
-/build
+# production (commented out for Vercel deployment)
+# /build
 
 # misc
 .DS_Store
