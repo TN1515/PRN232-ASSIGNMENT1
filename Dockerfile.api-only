@@ -1,0 +1,17 @@
+# Alternative simpler Dockerfile for debugging
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Build .NET API only (skip React for now)
+COPY ["ECommerceApp.API/ECommerceApp.API.csproj", "ECommerceApp.API/"]
+RUN dotnet restore "ECommerceApp.API/ECommerceApp.API.csproj"
+COPY . .
+WORKDIR "/src/ECommerceApp.API"
+RUN dotnet publish "ECommerceApp.API.csproj" -c Release -o /app/publish
+
+# Final stage - API only
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+EXPOSE 80
+ENTRYPOINT ["dotnet", "ECommerceApp.API.dll"]
