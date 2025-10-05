@@ -107,38 +107,7 @@ interface ProductsResponse {
   };
 }
 
-// Fallback demo data when API is not available
-const getDemoProducts = (): Product[] => {
-  return [
-    {
-      id: 1,
-      name: "Classic White T-Shirt",
-      description: "Premium cotton t-shirt perfect for everyday wear. Made from 100% organic cotton.",
-      price: 29.99,
-      image: "/api/placeholder/300/400",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 2,
-      name: "Denim Jacket",
-      description: "Vintage-style denim jacket with a modern twist. Perfect for layering.",
-      price: 89.99,
-      image: "/api/placeholder/300/400",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    },
-    {
-      id: 3,
-      name: "Black Hoodie",
-      description: "Comfortable fleece hoodie with adjustable drawstring and kangaroo pocket.",
-      price: 59.99,
-      image: "/api/placeholder/300/400",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  ];
-};
+
 
 export const productService = {
   // Test API connection
@@ -187,13 +156,6 @@ export const productService = {
         return Array.isArray(altResponse.data) ? altResponse.data : altResponse.data.products;
       } catch (altError: any) {
         console.error('Alternative endpoint also failed:', altError);
-        
-        // In production, return demo data to prevent complete failure
-        if (process.env.NODE_ENV === 'production' || window.location.hostname.includes('vercel.app')) {
-          console.warn('API unavailable, using demo data for better user experience');
-          return getDemoProducts();
-        }
-        
         throw new Error(`Failed to fetch products: ${error.message}`);
       }
     }
@@ -220,45 +182,6 @@ export const productService = {
       return response.data;
     } catch (error: any) {
       console.error('Search products failed:', error);
-      
-      // Fallback for production
-      if (process.env.NODE_ENV === 'production' || window.location.hostname.includes('vercel.app')) {
-        console.warn('API search unavailable, using demo data');
-        const demoProducts = getDemoProducts();
-        
-        // Simple filtering for demo data
-        let filtered = demoProducts;
-        if (params.search) {
-          filtered = filtered.filter(p => 
-            p.name.toLowerCase().includes(params.search!.toLowerCase()) ||
-            p.description.toLowerCase().includes(params.search!.toLowerCase())
-          );
-        }
-        if (params.minPrice !== undefined) {
-          filtered = filtered.filter(p => p.price >= params.minPrice!);
-        }
-        if (params.maxPrice !== undefined) {
-          filtered = filtered.filter(p => p.price <= params.maxPrice!);
-        }
-        
-        const page = params.page || 1;
-        const pageSize = params.pageSize || 6;
-        const startIndex = (page - 1) * pageSize;
-        const paginatedProducts = filtered.slice(startIndex, startIndex + pageSize);
-        
-        return {
-          products: paginatedProducts,
-          pagination: {
-            currentPage: page,
-            pageSize: pageSize,
-            totalItems: filtered.length,
-            totalPages: Math.ceil(filtered.length / pageSize),
-            hasNextPage: page < Math.ceil(filtered.length / pageSize),
-            hasPreviousPage: page > 1
-          }
-        };
-      }
-      
       throw error;
     }
   },
