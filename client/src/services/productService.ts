@@ -11,11 +11,11 @@ const getApiBaseUrl = () => {
     // Try multiple production URLs in order of preference
     const productionUrls = [
       process.env.REACT_APP_API_URL_PRODUCTION,
-      'https://prn232-assignment1-kcez.onrender.com/api/products',
+      'https://prn232-assignment1-kcez.onrender.com/api',
       'https://prn232-assignment1-kcez.onrender.com'
     ].filter(Boolean);
     
-    return productionUrls[0] || 'https://prn232-assignment1-kcez.onrender.com/api/products';
+    return productionUrls[0] || 'https://prn232-assignment1-kcez.onrender.com/api';
   }
   
   // Local development - ensure correct URL
