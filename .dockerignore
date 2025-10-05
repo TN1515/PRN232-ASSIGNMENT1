@@ -12,9 +12,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# React build outputs (avoid conflicts) - but keep source
-# **/build
-# **/dist
+# React build outputs (avoid conflicts)
+**/build
+**/dist
 
 # Git
 .git

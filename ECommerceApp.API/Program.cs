@@ -54,7 +54,7 @@ builder.Services.AddCors(options =>
             if (builder.Environment.IsDevelopment())
             {
                 // Development - allow localhost with credentials
-                policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000")
+                policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "https://prn-232-assignment-1.vercel.app/")
                       .AllowAnyHeader()
                       .AllowAnyMethod()
                       .AllowCredentials();
