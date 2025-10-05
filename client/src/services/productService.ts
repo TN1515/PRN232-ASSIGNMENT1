@@ -27,9 +27,13 @@ const getApiEndpoint = (path: string) => {
 };
 
 // Debug logging
+console.log('=== API Configuration ===');
 console.log('Environment:', process.env.NODE_ENV);
 console.log('Hostname:', window.location.hostname);
 console.log('API Base URL:', API_BASE_URL);
+console.log('Local API URL:', process.env.REACT_APP_API_URL_LOCAL);
+console.log('Production API URL:', process.env.REACT_APP_API_URL_PRODUCTION);
+console.log('========================');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

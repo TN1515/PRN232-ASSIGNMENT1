@@ -1,0 +1,6 @@
+{
+  "env": {
+    "REACT_APP_API_URL_LOCAL": "http://localhost:5000/api",
+    "REACT_APP_API_URL_PRODUCTION": "https://prn232-assignment1-kcez.onrender.com"
+  }
+}
