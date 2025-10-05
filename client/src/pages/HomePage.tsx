@@ -145,13 +145,27 @@ const HomePage: React.FC = () => {
     );
   }
 
+  const handleTestConnection = async () => {
+    console.log('Testing API connection...');
+    const isConnected = await productService.testConnection();
+    console.log('Connection test result:', isConnected);
+  };
+
   if (error) {
     return (
       <div className="error">
         <p>{error}</p>
-        <button onClick={() => fetchProducts()} className="btn btn-primary">
-          Try Again
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <button onClick={() => fetchProducts()} className="btn btn-primary">
+            Try Again
+          </button>
+          <button onClick={handleTestConnection} className="btn btn-secondary">
+            Test Connection
+          </button>
+        </div>
+        <div style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
+          <p>Check browser console for debug information</p>
+        </div>
       </div>
     );
   }

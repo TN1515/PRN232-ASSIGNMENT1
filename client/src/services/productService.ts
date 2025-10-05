@@ -1,13 +1,21 @@
 import axios from 'axios';
 import { Product } from '../types/Product';
 
-// Smart API URL detection
+// Smart API URL detection with fallback options
 const getApiBaseUrl = () => {
   // Check if we're running on Vercel (production)
   if (window.location.hostname.includes('vercel.app') || 
       window.location.hostname.includes('netlify.app') ||
       process.env.NODE_ENV === 'production') {
-    return process.env.REACT_APP_API_URL_PRODUCTION || 'https://prn232-assignment1-kcez.onrender.com/swagger/';
+    
+    // Try multiple production URLs in order of preference
+    const productionUrls = [
+      process.env.REACT_APP_API_URL_PRODUCTION,
+      'https://prn232-assignment1-kcez.onrender.com/swagger',
+      'https://prn232-assignment1-kcez.onrender.com'
+    ].filter(Boolean);
+    
+    return productionUrls[0] || 'https://prn232-assignment1-kcez.onrender.com/swagger';
   }
   
   // Local development
@@ -16,9 +24,9 @@ const getApiBaseUrl = () => {
 
 const RAW_API_BASE_URL = getApiBaseUrl();
 
-// Convert swagger URL to API URL if needed
-const API_BASE_URL = RAW_API_BASE_URL.includes('/swagger/') 
-  ? RAW_API_BASE_URL.replace('/swagger/', '/api')
+// Convert swagger URL to API URL - handle both /swagger and /swagger/
+const API_BASE_URL = RAW_API_BASE_URL.includes('/swagger') 
+  ? RAW_API_BASE_URL.replace(/\/swagger\/?$/, '/api')
   : RAW_API_BASE_URL;
 
 // Helper function to build API endpoint
@@ -46,7 +54,46 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
+
+// Request interceptor for logging
+api.interceptors.request.use(
+  (config) => {
+    console.log('Making request:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullUrl: `${config.baseURL}${config.url}`,
+    });
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor for logging
+api.interceptors.response.use(
+  (response) => {
+    console.log('Response received:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data,
+    });
+    return response;
+  },
+  (error) => {
+    console.error('Response error:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+    });
+    return Promise.reject(error);
+  }
+);
 
 interface ProductsResponse {
   products: Product[];
@@ -61,11 +108,63 @@ interface ProductsResponse {
 }
 
 export const productService = {
+  // Test API connection
+  testConnection: async (): Promise<boolean> => {
+    try {
+      // Try different endpoints to test connectivity
+      const endpoints = [
+        getApiEndpoint('/products'),
+        '/products',
+        'products'
+      ];
+      
+      for (const endpoint of endpoints) {
+        try {
+          console.log(`Testing endpoint: ${API_BASE_URL}${endpoint}`);
+          await api.get(endpoint);
+          console.log(`✓ Successfully connected to: ${endpoint}`);
+          return true;
+        } catch (error: any) {
+          console.log(`✗ Failed to connect to: ${endpoint} - ${error.message}`);
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      return false;
+    }
+  },
+
   // Get all products (legacy method for compatibility)
   getAllProducts: async (): Promise<Product[]> => {
-    const response = await api.get(getApiEndpoint('/products'));
-    // Handle both old and new response format
-    return Array.isArray(response.data) ? response.data : response.data.products;
+    try {
+      console.log('Fetching products from:', API_BASE_URL + getApiEndpoint('/products'));
+      const response = await api.get(getApiEndpoint('/products'));
+      console.log('API Response:', response.data);
+      
+      // Handle both old and new response format
+      return Array.isArray(response.data) ? response.data : response.data.products;
+    } catch (error: any) {
+      console.error('Failed to fetch products:', error);
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL
+      });
+      
+      // Try alternative approach
+      try {
+        console.log('Trying alternative endpoint...');
+        const altResponse = await api.get('/products');
+        return Array.isArray(altResponse.data) ? altResponse.data : altResponse.data.products;
+      } catch (altError: any) {
+        console.error('Alternative endpoint also failed:', altError);
+        throw new Error(`Failed to fetch products: ${error.message}`);
+      }
+    }
   },
 
   // Search products with filters and pagination
