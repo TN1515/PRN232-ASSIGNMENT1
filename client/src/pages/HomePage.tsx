@@ -13,6 +13,7 @@ const HomePage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usingDemoData, setUsingDemoData] = useState(false);
   
   // Search and Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,9 +45,17 @@ const HomePage: React.FC = () => {
       setTotalPages(response.pagination.totalPages);
       setTotalItems(response.pagination.totalItems);
       setError(null);
+      
+      // Check if using demo data (demo products have specific IDs 1, 2, 3)
+      const isDemoData = response.products.length > 0 && 
+        response.products.every(p => p.id <= 3) &&
+        response.products.some(p => p.name === 'Classic White T-Shirt');
+      setUsingDemoData(isDemoData);
+      
     } catch (err) {
       setError('Failed to fetch products. Please try again later.');
       console.error('Error fetching products:', err);
+      setUsingDemoData(false);
     } finally {
       setLoading(false);
     }
@@ -176,6 +185,18 @@ const HomePage: React.FC = () => {
         <div className="header">
           <h1>✨ Our Premium Collection ✨</h1>
           <p>Discover our handcrafted selection of modern fashion pieces designed for the contemporary lifestyle</p>
+          {usingDemoData && (
+            <div style={{ 
+              backgroundColor: '#fff3cd', 
+              border: '1px solid #ffeaa7', 
+              borderRadius: '5px', 
+              padding: '10px', 
+              margin: '10px 0',
+              color: '#856404'
+            }}>
+              ⚠️ Demo Mode: API is temporarily unavailable. Showing sample products for demonstration.
+            </div>
+          )}
         </div>
         {products.length === 0 ? (
           <div className="no-products">
