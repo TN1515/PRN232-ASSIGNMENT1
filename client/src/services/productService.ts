@@ -33,24 +33,38 @@ if (API_BASE_URL.includes('/swagger')) {
 }
 
 // Ensure /api suffix for base URLs that need it
-if (!API_BASE_URL.includes('/api') && !API_BASE_URL.endsWith('/')) {
-  API_BASE_URL = API_BASE_URL + '/api';
+// if (!API_BASE_URL.includes('/api') && !API_BASE_URL.endsWith('/')) {
+//   API_BASE_URL = API_BASE_URL + '/api';
+// }
+if (!API_BASE_URL.match(/\/api\/?$/)) {
+  // Nếu base URL chưa có /api, thêm vào
+  API_BASE_URL = API_BASE_URL.replace(/\/+$/, '') + '/api';
 }
 
 // Helper function to build API endpoint
+// const getApiEndpoint = (path: string) => {
+//   // Clean path
+//   const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  
+//   // If base URL already includes /api, don't add it again
+//   if (API_BASE_URL.includes('/api')) {
+//     return cleanPath;
+//   }
+  
+//   // Add /api prefix to path
+//   return `/api${cleanPath}`;
+// };
 const getApiEndpoint = (path: string) => {
-  // Clean path
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  
-  // If base URL already includes /api, don't add it again
-  if (API_BASE_URL.includes('/api')) {
-    return cleanPath;
-  }
-  
-  // Add /api prefix to path
-  return `/api${cleanPath}`;
-};
 
+  // Nếu base URL đã kết thúc bằng /api, không thêm gì thêm
+  // Nếu nó kết thúc bằng /api/products thì cắt bớt phần /products
+  if (API_BASE_URL.match(/\/api\/products\/?$/)) {
+    API_BASE_URL = API_BASE_URL.replace(/\/products\/?$/, '');
+  }
+
+  return cleanPath;
+};
 // Debug logging
 console.log('=== API Configuration ===');
 console.log('Environment:', process.env.NODE_ENV);
