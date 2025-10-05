@@ -18,10 +18,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete }) => {
   return (
     <div className="product-card">
       <div className="product-image">
-        <img 
-          src={product.image || 'https://via.placeholder.com/300x300?text=No+Image'} 
-          alt={product.name}
-        />
+        {product.image ? (
+          <img 
+            src={product.image} 
+            alt={product.name}
+          />
+        ) : (
+          <div className="no-image-placeholder">
+            <span>No Image</span>
+          </div>
+        )}
       </div>
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>

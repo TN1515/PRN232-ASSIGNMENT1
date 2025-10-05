@@ -6,7 +6,7 @@ using ECommerceApp.API.Models;
 namespace ECommerceApp.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/products")]
 public class ProductsController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -29,7 +29,10 @@ public class ProductsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("GetProducts called with page={Page}, pageSize={PageSize}", page, pageSize);
+            
             var query = _context.Products.AsQueryable();
+            _logger.LogInformation("Products query created successfully");
 
             // Apply search filter
             if (!string.IsNullOrEmpty(search))
@@ -77,8 +80,9 @@ public class ProductsController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error occurred while fetching products");
-            return StatusCode(500, "An error occurred while processing your request");
+            _logger.LogError(ex, "Error occurred while fetching products: {Message}", ex.Message);
+            _logger.LogError("Stack trace: {StackTrace}", ex.StackTrace);
+            return StatusCode(500, new { error = "An error occurred while processing your request", message = ex.Message });
         }
     }
 
@@ -275,29 +279,4 @@ public class ProductsController : ControllerBase
         }
     }
 
-    // GET: api/products/test
-    [HttpGet("test")]
-    public async Task<IActionResult> TestConnection()
-    {
-        try
-        {
-            await _context.Database.CanConnectAsync();
-            var count = await _context.Products.CountAsync();
-            return Ok(new { 
-                status = "healthy", 
-                database = "connected", 
-                productCount = count,
-                timestamp = DateTime.UtcNow
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Health check failed");
-            return StatusCode(500, new { 
-                status = "unhealthy", 
-                error = ex.Message,
-                timestamp = DateTime.UtcNow
-            });
-        }
-    }
 }

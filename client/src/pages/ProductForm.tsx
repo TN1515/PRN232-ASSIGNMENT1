@@ -169,7 +169,7 @@ const ProductForm: React.FC = () => {
                 name="image"
                 value={formData.image}
                 onChange={handleInputChange}
-                placeholder="https://example.com/image.jpg"
+                placeholder="Enter product image URL"
                 disabled={loading}
               />
             </div>

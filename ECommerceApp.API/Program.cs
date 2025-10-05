@@ -16,7 +16,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add Entity Framework
+// Add Entity Framework with PostgreSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 // Replace environment variable placeholders in connection string
@@ -40,7 +40,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
     else
     {
-        // SQLite for development
+        // SQLite for development fallback
         options.UseSqlite(connectionString ?? "Data Source=ecommerce.db");
     }
 });
@@ -79,22 +79,10 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
-
 app.UseCors("AllowReactApp");
-
-// Serve static files (React app)
-app.UseDefaultFiles();
-app.UseStaticFiles();
 
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Fallback route for SPA
-app.MapFallbackToFile("index.html");
-
-// Database is already migrated manually, no need to auto-migrate
-// Use 'dotnet ef database update' command for migrations
 
 app.Run();

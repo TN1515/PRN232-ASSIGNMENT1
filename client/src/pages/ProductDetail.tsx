@@ -93,10 +93,16 @@ const ProductDetail: React.FC = () => {
         </button>
         <div className="product-detail-content">
           <div className="product-image-large">
-            <img 
-              src={product.image || 'https://via.placeholder.com/600x600?text=No+Image'} 
-              alt={product.name}
-            />
+            {product.image ? (
+              <img 
+                src={product.image} 
+                alt={product.name}
+              />
+            ) : (
+              <div className="no-image-placeholder-large">
+                <span>No Image Available</span>
+              </div>
+            )}
           </div>
           <div className="product-info-detailed">
             <h1>{product.name}</h1>
