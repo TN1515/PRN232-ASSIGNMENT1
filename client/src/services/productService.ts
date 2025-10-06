@@ -43,16 +43,11 @@ if (API_BASE_URL.includes('/swagger')) {
 
 // Helper function to build API endpoint
 const getApiEndpoint = (path: string) => {
-  // Clean path
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  // Clean path - remove leading slash if present
+  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
   
-  // If base URL already includes /api, don't add it again
-  // if (API_BASE_URL.includes('/api')) {
-    return cleanPath;
-  // }
-  
-  // Add /api prefix to path
-  return `/api${cleanPath}`;
+  // Return clean path since baseURL already includes /api
+  return `/${cleanPath}`;
 };
 
 // Debug logging
@@ -182,7 +177,7 @@ export const productService = {
       // Try alternative endpoint
       try {
         console.log('Trying alternative endpoint...');
-        const altResponse = await api.get('/products');
+        const altResponse = await api.get(getApiEndpoint('/products'));
         return Array.isArray(altResponse.data) ? altResponse.data : altResponse.data.products;
       } catch (altError: any) {
         console.error('Alternative endpoint also failed:', altError);
