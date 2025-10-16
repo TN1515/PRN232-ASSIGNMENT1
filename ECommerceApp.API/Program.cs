@@ -100,20 +100,26 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.UseSwagger();
-app.UseSwaggerUI();
-
 if (app.Environment.IsDevelopment())
 {
+    app.UseSwagger();
+    app.UseSwaggerUI();
     app.UseDeveloperExceptionPage();
 }
 
 app.UseCors("AllowReactApp");
+
+// Serve static files (React frontend)
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Fallback to index.html for React routing
+app.MapFallbackToFile("index.html");
 
 app.Run();
