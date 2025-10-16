@@ -51,12 +51,12 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),  // Convert DateTime to ISO 8601 string for storage
-                    v => DateTime.Parse(v));  // Convert string back to DateTime when reading
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             entity.Property(u => u.UpdatedAt)
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),
-                    v => DateTime.Parse(v));
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             
             // PostgreSQL specific configurations
             entity.Property(u => u.Id).UseIdentityColumn();
@@ -74,12 +74,12 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),
-                    v => DateTime.Parse(v));
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             entity.Property(c => c.UpdatedAt)
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),
-                    v => DateTime.Parse(v));
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             
             // PostgreSQL specific configurations
             entity.Property(c => c.Id).UseIdentityColumn();
@@ -103,7 +103,7 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),
-                    v => DateTime.Parse(v));
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             
             // PostgreSQL specific configurations
             entity.Property(ci => ci.Id).UseIdentityColumn();
@@ -132,29 +132,29 @@ public class ApplicationDbContext : DbContext
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),
-                    v => DateTime.Parse(v));
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             entity.Property(o => o.PaidDate)
                 .HasConversion(
                     v => v != null ? v.Value.ToString("o") : (string?)null,
-                    v => v != null ? DateTime.Parse(v) : (DateTime?)null);
+                    v => v != null ? DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind) : (DateTime?)null);
             entity.Property(o => o.ShippedDate)
                 .HasConversion(
                     v => v != null ? v.Value.ToString("o") : (string?)null,
-                    v => v != null ? DateTime.Parse(v) : (DateTime?)null);
+                    v => v != null ? DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind) : (DateTime?)null);
             entity.Property(o => o.DeliveredDate)
                 .HasConversion(
                     v => v != null ? v.Value.ToString("o") : (string?)null,
-                    v => v != null ? DateTime.Parse(v) : (DateTime?)null);
+                    v => v != null ? DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind) : (DateTime?)null);
             entity.Property(o => o.CreatedAt)
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),
-                    v => DateTime.Parse(v));
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             entity.Property(o => o.UpdatedAt)
                 .IsRequired()
                 .HasConversion(
                     v => v.ToString("o"),
-                    v => DateTime.Parse(v));
+                    v => DateTime.Parse(v, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind));
             
             // PostgreSQL specific configurations
             entity.Property(o => o.Id).UseIdentityColumn();
