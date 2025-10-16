@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import '../styles/Auth.css';
 
@@ -12,6 +13,7 @@ const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -65,11 +67,8 @@ const Login: React.FC = () => {
       const token = response.data.token || response.data.Token;
       const user = response.data.user || response.data.User;
       
-      if (token) {
-        localStorage.setItem('token', token);
-      }
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
+      if (token && user) {
+        login(user, token);
       }
       
       // Redirect to home

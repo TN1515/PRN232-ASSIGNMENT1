@@ -49,18 +49,20 @@ const Navigation: React.FC = () => {
               <span>Home</span>
             </Link>
           </li>
-          <li className="nav-item">
-            <Link 
-              to="/products/new" 
-              className={`nav-link ${location.pathname === '/products/new' ? 'active' : ''} ${activeButton === 'add-product' ? 'clicking' : ''}`}
-              onMouseDown={() => handleMouseDown('add-product')}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
-            >
-              <span className="nav-icon">+</span>
-              <span>Add Product</span>
-            </Link>
-          </li>
+          {user && (
+            <li className="nav-item">
+              <Link 
+                to="/products/new" 
+                className={`nav-link ${location.pathname === '/products/new' ? 'active' : ''} ${activeButton === 'add-product' ? 'clicking' : ''}`}
+                onMouseDown={() => handleMouseDown('add-product')}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                <span className="nav-icon">+</span>
+                <span>Add Product</span>
+              </Link>
+            </li>
+          )}
           {user ? (
             <>
               <li className="nav-item">

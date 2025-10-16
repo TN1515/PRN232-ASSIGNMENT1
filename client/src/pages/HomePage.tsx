@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
 import { Product } from '../types/Product';
 import ProductCard from '../components/ProductCard';
@@ -10,6 +11,7 @@ import './HomePage.css';
 
 const HomePage: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,9 +186,11 @@ const HomePage: React.FC = () => {
               <div className="empty-icon">📦</div>
               <h3>No Products Yet</h3>
               <p>Start building your collection by adding your first product!</p>
-              <Link to="/products/new" className="btn btn-primary cta-button">
-                🚀 Add Your First Product
-              </Link>
+              {user && (
+                <Link to="/products/new" className="btn btn-primary cta-button">
+                  🚀 Add Your First Product
+                </Link>
+              )}
             </div>
           </div>
         ) : (

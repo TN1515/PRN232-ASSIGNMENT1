@@ -185,7 +185,8 @@
   gap: 1.5rem;
   justify-content: flex-end;
   margin-top: 2rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
 .btn {
@@ -256,6 +257,12 @@
   }
   
   .form-actions {
-    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+  }
+  
+  .form-actions .btn {
+    flex: 1;
+    min-width: 120px;
   }
 }

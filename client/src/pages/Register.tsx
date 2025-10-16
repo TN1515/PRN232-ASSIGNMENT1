@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import '../styles/Auth.css';
 
@@ -15,6 +16,7 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Check if passwords match (for visual feedback)
   const passwordsMatch = formData.password && formData.confirmPassword && formData.password === formData.confirmPassword;
@@ -105,11 +107,8 @@ const Register: React.FC = () => {
       const token = response.data.token || response.data.Token;
       const user = response.data.user || response.data.User;
       
-      if (token) {
-        localStorage.setItem('token', token);
-      }
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
+      if (token && user) {
+        login(user, token);
       }
       
       // Redirect to home

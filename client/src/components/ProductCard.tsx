@@ -1,6 +1,7 @@
 import React from 'react';
 import { Product } from '../types/Product';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './ProductCard.css';
 
 interface ProductCardProps {
@@ -9,6 +10,8 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete }) => {
+  const { user } = useAuth();
+  
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       await onDelete(product.id);
@@ -37,12 +40,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete }) => {
           <Link to={`/products/${product.id}`} className="btn btn-primary">
             View Details
           </Link>
-          <Link to={`/products/${product.id}/edit`} className="btn btn-secondary">
-            Edit
-          </Link>
-          <button onClick={handleDelete} className="btn btn-danger">
-            Delete
-          </button>
+          {user && (
+            <>
+              <Link to={`/products/${product.id}/edit`} className="btn btn-secondary">
+                Edit
+              </Link>
+              <button onClick={handleDelete} className="btn btn-danger">
+                Delete
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
+import cartService from '../services/cartService';
 import { Product } from '../types/Product';
 import './ProductDetail.css';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -28,6 +34,27 @@ const ProductDetail: React.FC = () => {
       console.error('Error fetching product:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!product || !user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      setError(null);
+      await cartService.addToCart(product.id, quantity);
+      setSuccess('Added to cart successfully!');
+      setQuantity(1);
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      console.error('Error adding to cart:', err);
+      setError(err.response?.data?.message || 'Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
     }
   };
 
@@ -63,7 +90,7 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && !product) {
     return (
       <div className="error">
         <p>{error}</p>
@@ -115,17 +142,70 @@ const ProductDetail: React.FC = () => {
               <p><strong>Created:</strong> {new Date(product.createdAt).toLocaleDateString()}</p>
               <p><strong>Updated:</strong> {new Date(product.updatedAt).toLocaleDateString()}</p>
             </div>
-            <div className="product-actions-detailed">
-              <button 
-                onClick={() => navigate(`/products/${product.id}/edit`)} 
-                className="btn btn-primary"
-              >
-                Edit Product
-              </button>
-              <button onClick={handleDelete} className="btn btn-danger">
-                Delete Product
-              </button>
+
+            {/* Shopping Section */}
+            <div className="product-shopping">
+              {error && <div className="error-message">{error}</div>}
+              {success && <div className="success-message">{success}</div>}
+              
+              <div className="quantity-selector">
+                <label htmlFor="quantity">Quantity:</label>
+                <div className="quantity-input">
+                  <button 
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={addingToCart}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    id="quantity"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    disabled={addingToCart}
+                  />
+                  <button 
+                    onClick={() => setQuantity(quantity + 1)}
+                    disabled={addingToCart}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {user ? (
+                <button 
+                  className="btn btn-success btn-add-to-cart"
+                  onClick={handleAddToCart}
+                  disabled={addingToCart}
+                >
+                  {addingToCart ? 'Adding...' : 'Add to Cart 🛒'}
+                </button>
+              ) : (
+                <button 
+                  className="btn btn-success btn-add-to-cart"
+                  onClick={() => navigate('/login')}
+                >
+                  Login to Purchase
+                </button>
+              )}
             </div>
+
+            {/* Admin Actions */}
+            {user && (
+              <div className="product-actions-detailed">
+                <button 
+                  onClick={() => navigate(`/products/${product.id}/edit`)} 
+                  className="btn btn-primary"
+                >
+                  Edit Product
+                </button>
+                <button onClick={handleDelete} className="btn btn-danger">
+                  Delete Product
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

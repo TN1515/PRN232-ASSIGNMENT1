@@ -358,20 +358,53 @@ body .navigation .nav-menu .nav-item .nav-link.clicking .nav-icon {
 }
 
 .btn-logout {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white !important;
+  background: transparent;
+  color: rgba(74, 85, 104, 0.9);
   border: none;
   cursor: pointer;
   padding: 0.75rem 1.25rem;
   border-radius: 15px;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.btn-logout:hover {
+.btn-logout::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 15px;
+}
+
+.btn-logout:hover::before,
+.btn-logout:active::before,
+.btn-logout:focus::before {
+  opacity: 1;
+}
+
+.btn-logout:hover,
+.btn-logout:active,
+.btn-logout:focus {
+  color: white !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-logout span {
+  position: relative;
+  z-index: 2;
+  color: inherit;
 }
 
 .nav-link-primary {

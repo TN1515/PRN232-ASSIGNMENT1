@@ -230,6 +230,117 @@
   background-color: #c0392b;
 }
 
+.btn-success {
+  background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+}
+
+.btn-success:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Shopping Section */
+.product-shopping {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.quantity-selector label {
+  font-weight: bold;
+  color: #333;
+}
+
+.quantity-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  padding: 0.25rem;
+}
+
+.quantity-input button {
+  background: white;
+  border: none;
+  color: #667eea;
+  font-weight: bold;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.quantity-input button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+}
+
+.quantity-input button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.quantity-input input {
+  width: 50px;
+  border: none;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.quantity-input input:disabled {
+  opacity: 0.7;
+  background-color: #f9f9f9;
+}
+
+.btn-add-to-cart {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 1rem;
@@ -243,5 +354,15 @@
   
   .product-actions-detailed {
     flex-direction: column;
+  }
+
+  .product-shopping {
+    margin: 1.5rem 0;
+    padding: 1rem;
+  }
+
+  .quantity-selector {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
