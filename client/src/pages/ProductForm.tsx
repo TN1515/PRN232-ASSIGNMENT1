@@ -62,6 +62,48 @@ const ProductForm: React.FC = () => {
     }));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image file size must be less than 5MB.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Convert image to base64 data URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData(prev => ({
+          ...prev,
+          image: base64String
+        }));
+        setLoading(false);
+      };
+      reader.onerror = () => {
+        setError('Failed to read image file.');
+        setLoading(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setError('Failed to upload image. Please try again.');
+      console.error('Error uploading image:', err);
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -163,15 +205,38 @@ const ProductForm: React.FC = () => {
 
             <div className="form-group">
               <label htmlFor="image">Image URL (Optional)</label>
-              <input
-                type="url"
-                id="image"
-                name="image"
-                value={formData.image}
-                onChange={handleInputChange}
-                placeholder="Enter product image URL"
-                disabled={loading}
-              />
+              <div className="image-input-wrapper">
+                <input
+                  type="url"
+                  id="image"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleInputChange}
+                  placeholder="Enter product image URL"
+                  disabled={loading}
+                />
+                <input
+                  type="file"
+                  id="imageFile"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleImageUpload}
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className="btn btn-upload"
+                  onClick={() => document.getElementById('imageFile')?.click()}
+                  disabled={loading}
+                >
+                  📁 Upload
+                </button>
+              </div>
+              {formData.image && (
+                <div className="image-preview">
+                  <img src={formData.image} alt="Product preview" />
+                </div>
+              )}
             </div>
 
             <div className="form-actions">

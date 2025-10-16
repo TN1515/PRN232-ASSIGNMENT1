@@ -33,20 +33,16 @@ if (API_BASE_URL.includes('/swagger')) {
 }
 
 // Ensure /api suffix for base URLs that need it
-// if (!API_BASE_URL.includes('/api') && !API_BASE_URL.endsWith('/')) {
-//   API_BASE_URL = API_BASE_URL + '/api';
-// }
-// if (!API_BASE_URL.match(/\/api\/?$/)) {
-//   // Nếu base URL chưa có /api, thêm vào
-//   API_BASE_URL = API_BASE_URL.replace(/\/+$/, '') + '/api';
-// }
+if (!API_BASE_URL.includes('/api') && !API_BASE_URL.endsWith('/')) {
+  API_BASE_URL = API_BASE_URL + '/api';
+}
 
 // Helper function to build API endpoint
 const getApiEndpoint = (path: string) => {
   // Clean path - remove leading slash if present
   const cleanPath = path.startsWith('/') ? path.substring(1) : path;
   
-  // Return clean path since baseURL already includes /api
+  // Return clean path (baseURL already includes /api)
   return `/${cleanPath}`;
 };
 
@@ -68,14 +64,21 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-// Request interceptor for logging
+// Request interceptor for logging and adding auth token
 api.interceptors.request.use(
   (config) => {
+    // Add JWT token if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     console.log('Making request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
       baseURL: config.baseURL,
       fullUrl: `${config.baseURL}${config.url}`,
+      hasToken: !!token,
     });
     return config;
   },

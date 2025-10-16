@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using ECommerceApp.API.Data;
 using ECommerceApp.API.Models;
+using ECommerceApp.API.Services;
 using DotNetEnv;
 
 // Load .env file if exists
@@ -16,32 +20,56 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add Entity Framework with PostgreSQL
+// Add JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"] ?? "your-super-secret-key-change-this-in-production-this-should-be-atleast-32-characters");
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true
+    };
+});
+
+// Add custom services
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Add Entity Framework with PostgreSQL ONLY - No SQLite fallback
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// Replace environment variable placeholders in connection string
-if (!string.IsNullOrEmpty(connectionString))
+if (string.IsNullOrEmpty(connectionString))
 {
-    connectionString = connectionString
-        .Replace("${DB_HOST}", Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost")
-        .Replace("${DB_DATABASE}", Environment.GetEnvironmentVariable("DB_DATABASE") ?? "ecommerce")
-        .Replace("${DB_USERNAME}", Environment.GetEnvironmentVariable("DB_USERNAME") ?? "postgres")
-        .Replace("${DB_PASSWORD}", Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "password")
-        .Replace("${DB_SSL_MODE}", Environment.GetEnvironmentVariable("DB_SSL_MODE") ?? "Prefer")
-        .Replace("${DB_TRUST_SERVER_CERTIFICATE}", Environment.GetEnvironmentVariable("DB_TRUST_SERVER_CERTIFICATE") ?? "false");
+    throw new InvalidOperationException("Database connection string 'DefaultConnection' is not configured.");
 }
+
+Console.WriteLine($"Connecting to PostgreSQL database...");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    if (connectionString?.Contains("Host=") == true)
+    options.UseNpgsql(connectionString, npgsqlOptions =>
     {
-        // PostgreSQL for production
-        options.UseNpgsql(connectionString);
-    }
-    else
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 3,
+            maxRetryDelay: TimeSpan.FromSeconds(5),
+            errorCodesToAdd: null);
+    });
+    
+    if (builder.Environment.IsDevelopment())
     {
-        // SQLite for development fallback
-        options.UseSqlite(connectionString ?? "Data Source=ecommerce.db");
+        options.EnableSensitiveDataLogging();
+        options.LogTo(Console.WriteLine, LogLevel.Information);
     }
 });
 
@@ -81,6 +109,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowReactApp");
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

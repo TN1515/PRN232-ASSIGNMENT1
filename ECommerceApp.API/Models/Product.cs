@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ECommerceApp.API.Models;
 
@@ -21,7 +22,10 @@ public class Product
     [Url]
     public string? Image { get; set; }
     
+    // Ignore these fields - they exist in DB as text but we don't need them
+    [NotMapped]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
+    [NotMapped]
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
