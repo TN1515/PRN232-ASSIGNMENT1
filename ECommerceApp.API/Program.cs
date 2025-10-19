@@ -101,8 +101,15 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 // Enable Swagger for both Development and Production
-app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwagger(c => 
+{
+    c.RouteTemplate = "swagger/{documentname}/swagger.json";
+});
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "E-Commerce API V1");
+    c.RoutePrefix = "swagger";
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -115,14 +122,20 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-// Map API controllers BEFORE static files to ensure API routes are handled
+// Map API controllers
 app.MapControllers();
 
-// Serve static files (React frontend) - AFTER controllers
+// Serve static files (React frontend)
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Fallback to index.html for React routing - LAST, so APIs aren't affected
-app.MapFallbackToFile("index.html");
+// Custom fallback for React routing - exclude API and swagger routes
+app.MapWhen(
+    context => !context.Request.Path.StartsWithSegments("/api") && 
+               !context.Request.Path.StartsWithSegments("/swagger") &&
+               !context.Request.Path.StartsWithSegments("/swagger-ui") &&
+               !context.Request.Path.StartsWithSegments("/swagger-resources"),
+    appBranch => appBranch.MapFallbackToFile("index.html")
+);
 
 app.Run();
