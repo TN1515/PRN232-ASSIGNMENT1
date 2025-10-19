@@ -111,17 +111,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 
-// Serve static files (React frontend)
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
 app.UseAuthentication();
 
 app.UseAuthorization();
 
+// Map API controllers BEFORE static files to ensure API routes are handled
 app.MapControllers();
 
-// Fallback to index.html for React routing
+// Serve static files (React frontend) - AFTER controllers
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// Fallback to index.html for React routing - LAST, so APIs aren't affected
 app.MapFallbackToFile("index.html");
 
 app.Run();
