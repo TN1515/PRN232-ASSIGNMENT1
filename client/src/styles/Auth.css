@@ -251,6 +251,24 @@
   font-weight: 500;
 }
 
+.success-message {
+  background: rgba(72, 187, 120, 0.1);
+  color: #2f855a;
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(72, 187, 120, 0.3);
+  backdrop-filter: blur(10px);
+  font-weight: 500;
+}
+
+.auth-description {
+  text-align: center;
+  color: #718096;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
 .auth-link {
   text-align: center;
   margin-top: 2rem;

@@ -8,6 +8,8 @@ A full-stack web application for selling clothing products built with ASP.NET Co
 - Complete CRUD operations for products
 - PostgreSQL database integration with Entity Framework Core
 - RESTful API endpoints
+- User authentication and authorization with JWT
+- Password reset functionality with token-based security
 - Data validation and error handling
 - Swagger API documentation
 - CORS configuration for frontend integration
@@ -17,6 +19,10 @@ A full-stack web application for selling clothing products built with ASP.NET Co
 - Product detail pages
 - Create/Edit product forms
 - Delete product functionality
+- User registration and login
+- Shopping cart functionality
+- Checkout and order management
+- Forgot Password / Reset Password flow
 - Responsive design with CSS
 - Type-safe development with TypeScript
 - React Router for navigation
@@ -32,11 +38,27 @@ Each product includes:
 
 ## API Endpoints
 
+### Products
 - `GET /api/products` - List all products
 - `GET /api/products/{id}` - Get single product
 - `POST /api/products` - Create new product
 - `PUT /api/products/{id}` - Update product
 - `DELETE /api/products/{id}` - Delete product
+
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user (requires authentication)
+- `POST /api/auth/forgot-password` - Request password reset token
+- `POST /api/auth/reset-password` - Reset password with token
+
+### Cart & Orders
+- `GET /api/cart` - Get user's cart
+- `POST /api/cart/items` - Add item to cart
+- `PUT /api/cart/items/{id}` - Update cart item quantity
+- `DELETE /api/cart/items/{id}` - Remove item from cart
+- `POST /api/orders` - Create order from cart
+- `GET /api/orders` - Get user's orders
 
 ## Tech Stack
 

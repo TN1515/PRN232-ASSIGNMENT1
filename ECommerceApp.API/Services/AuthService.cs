@@ -16,6 +16,8 @@ public interface IAuthService
     string GenerateJwtToken(User user);
     Task<User?> GetUserByEmailAsync(string email);
     Task<User?> GetUserByIdAsync(int id);
+    Task<ForgotPasswordResponse> ForgotPasswordAsync(ForgotPasswordRequest request);
+    Task<AuthResponse> ResetPasswordAsync(ResetPasswordRequest request);
 }
 
 public class AuthService : IAuthService
@@ -194,5 +196,110 @@ public class AuthService : IAuthService
     {
         var hashOfInput = Convert.ToBase64String(SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes(password)));
         return hashOfInput == hash;
+    }
+
+    public async Task<ForgotPasswordResponse> ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                return new ForgotPasswordResponse { Success = false, Message = "Email is required" };
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email.ToLower());
+            if (user == null)
+            {
+                // Return success even if user not found for security reasons (don't reveal if email exists)
+                return new ForgotPasswordResponse { Success = true, Message = "If the email exists, a reset link will be sent" };
+            }
+
+            // Generate reset token
+            var resetToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+            user.ResetToken = resetToken;
+            user.ResetTokenExpiry = DateTime.UtcNow.AddHours(1); // Token valid for 1 hour
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Password reset token generated for user: {user.Email}");
+
+            return new ForgotPasswordResponse
+            {
+                Success = true,
+                Message = "Password reset token generated successfully",
+                ResetToken = resetToken // In production, this should be sent via email
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during forgot password");
+            return new ForgotPasswordResponse { Success = false, Message = "An error occurred" };
+        }
+    }
+
+    public async Task<AuthResponse> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.Token))
+            {
+                return new AuthResponse { Success = false, Message = "Reset token is required" };
+            }
+
+            if (string.IsNullOrWhiteSpace(request.NewPassword))
+            {
+                return new AuthResponse { Success = false, Message = "New password is required" };
+            }
+
+            if (request.NewPassword != request.ConfirmPassword)
+            {
+                return new AuthResponse { Success = false, Message = "Passwords do not match" };
+            }
+
+            if (request.NewPassword.Length < 6)
+            {
+                return new AuthResponse { Success = false, Message = "Password must be at least 6 characters" };
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.ResetToken == request.Token);
+            if (user == null)
+            {
+                return new AuthResponse { Success = false, Message = "Invalid reset token" };
+            }
+
+            if (user.ResetTokenExpiry == null || user.ResetTokenExpiry < DateTime.UtcNow)
+            {
+                return new AuthResponse { Success = false, Message = "Reset token has expired" };
+            }
+
+            // Update password and clear reset token
+            user.PasswordHash = HashPassword(request.NewPassword);
+            user.ResetToken = null;
+            user.ResetTokenExpiry = null;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation($"Password reset successfully for user: {user.Email}");
+
+            return new AuthResponse
+            {
+                Success = true,
+                Message = "Password reset successfully",
+                User = new UserDto
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    CreatedAt = user.CreatedAt
+                },
+                Token = GenerateJwtToken(user)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during password reset");
+            return new AuthResponse { Success = false, Message = "Password reset failed" };
+        }
     }
 }

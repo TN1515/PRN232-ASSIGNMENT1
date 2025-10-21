@@ -101,4 +101,49 @@ public class AuthController : ControllerBase
             return StatusCode(500, new { message = "An error occurred" });
         }
     }
+
+    /// <summary>
+    /// Request password reset
+    /// </summary>
+    [HttpPost("forgot-password")]
+    public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword(ForgotPasswordRequest request)
+    {
+        try
+        {
+            _logger.LogInformation($"Forgot password request for email: {request.Email}");
+            var response = await _authService.ForgotPasswordAsync(request);
+            
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ForgotPassword endpoint");
+            return StatusCode(500, new { message = "An error occurred" });
+        }
+    }
+
+    /// <summary>
+    /// Reset password with token
+    /// </summary>
+    [HttpPost("reset-password")]
+    public async Task<ActionResult<AuthResponse>> ResetPassword(ResetPasswordRequest request)
+    {
+        try
+        {
+            _logger.LogInformation($"Reset password request with token: {request.Token?.Substring(0, Math.Min(10, request.Token?.Length ?? 0))}...");
+            var response = await _authService.ResetPasswordAsync(request);
+            
+            if (!response.Success)
+            {
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in ResetPassword endpoint");
+            return StatusCode(500, new { message = "An error occurred" });
+        }
+    }
 }

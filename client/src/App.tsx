@@ -7,6 +7,8 @@ import ProductDetail from './pages/ProductDetail';
 import ProductForm from './pages/ProductForm';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import CartPage from './pages/Cart';
 import CheckoutPage from './pages/Checkout';
 import OrdersPage from './pages/Orders';
@@ -23,6 +25,8 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/register" element={<Register />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/products/new" element={<ProductForm />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/products/:id/edit" element={<ProductForm />} />

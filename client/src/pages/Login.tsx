@@ -147,6 +147,12 @@ const Login: React.FC = () => {
             </div>
           </div>
 
+          <div className="forgot-password-link" style={{ textAlign: 'right', marginBottom: '15px' }}>
+            <a href="/forgot-password" style={{ fontSize: '14px', color: '#007bff' }}>
+              Forgot password?
+            </a>
+          </div>
+
           <button type="submit" className="btn btn-submit" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
