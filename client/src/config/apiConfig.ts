@@ -3,6 +3,8 @@
  * Centralized API URL configuration for all API calls
  */
 
+import axios from 'axios';
+
 // Smart API URL detection with fallback options
 const getApiBaseUrl = (): string => {
   // Check if we're running in production environment
@@ -44,12 +46,81 @@ export const getApiUrl = (endpoint: string): string => {
 };
 
 /**
+ * Create axios instance with proper configuration
+ */
+export const createApiClient = () => {
+  const client = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    timeout: 15000, // 15 second timeout
+    withCredentials: false, // Set to false to avoid CORS issues with credentials
+  });
+
+  // Request interceptor
+  client.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      console.log('📤 Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        fullUrl: `${config.baseURL}${config.url}`,
+        hasToken: !!token,
+      });
+
+      return config;
+    },
+    (error) => {
+      console.error('❌ Request error:', error);
+      return Promise.reject(error);
+    }
+  );
+
+  // Response interceptor
+  client.interceptors.response.use(
+    (response) => {
+      console.log('✅ Response:', {
+        status: response.status,
+        url: response.config?.url,
+      });
+      return response;
+    },
+    (error) => {
+      console.error('❌ Response error:', {
+        status: error.response?.status,
+        message: error.message,
+        data: error.response?.data,
+      });
+
+      // Handle specific errors
+      if (error.code === 'ERR_NETWORK') {
+        console.error('🔥 Network Error - API might be down or unreachable');
+      }
+
+      if (error.response?.status === 0 || error.code === 'ECONNABORTED') {
+        console.error('🔥 Connection Error or Timeout');
+      }
+
+      return Promise.reject(error);
+    }
+  );
+
+  return client;
+};
+
+/**
  * Debug API configuration
  */
 export const debugApiConfig = (): void => {
   console.log('=== API Configuration Debug ===');
   console.log('Environment:', process.env.NODE_ENV);
   console.log('Hostname:', window.location.hostname);
+  console.log('Protocol:', window.location.protocol);
   console.log('API Base URL:', API_BASE_URL);
   console.log('Example Product URL:', getApiUrl('/products'));
   console.log('Example Auth URL:', getApiUrl('/auth/login'));

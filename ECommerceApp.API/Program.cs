@@ -79,21 +79,26 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp",
         policy =>
         {
-            if (builder.Environment.IsDevelopment())
-            {
-                // Development - allow localhost with credentials
-                policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "https://prn-232-assignment-1.vercel.app/")
-                      .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials();
-            }
-            else
-            {
-                // Production - allow any origin for now, can be restricted later
-                policy.AllowAnyOrigin()
-                      .AllowAnyHeader() 
-                      .AllowAnyMethod();
-            }
+            policy.WithOrigins(
+                    "http://localhost:3000",
+                    "http://localhost:5173",
+                    "http://127.0.0.1:3000",
+                    "https://prn-232-assignment-1.vercel.app",
+                    "https://prn-232-assignment-1.vercel.app/",
+                    "https://*.vercel.app"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+    
+    // Additional policy for production - more permissive
+    options.AddPolicy("AllowAnyOrigin",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
         });
 });
 
@@ -108,7 +113,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
 }
+else
+{
+    // Redirect HTTP to HTTPS in production
+    app.UseHttpsRedirection();
+}
 
+// Use CORS middleware
 app.UseCors("AllowReactApp");
 
 app.UseAuthentication();

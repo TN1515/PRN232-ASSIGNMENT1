@@ -13,6 +13,8 @@ import CartPage from './pages/Cart';
 import CheckoutPage from './pages/Checkout';
 import OrdersPage from './pages/Orders';
 import './App.css';
+// Import diagnostics for debugging (available in console as window.apiDiagnostics)
+import './config/diagnostics';
 
 function App() {
   return (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { getApiClient } from '../config/axiosClient';
 import { getApiUrl } from '../config/apiConfig';
 import '../styles/Auth.css';
 
@@ -53,7 +53,8 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(getApiUrl('/auth/login'), {
+      const apiClient = getApiClient();
+      const response = await apiClient.post(getApiUrl('/auth/login'), {
         email: formData.email,
         password: formData.password,
       });
