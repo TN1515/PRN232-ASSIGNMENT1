@@ -7,12 +7,9 @@ import '../styles/Auth.css';
 const ForgotPassword: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
-    securityAnswer: '',
   });
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [securityQuestion, setSecurityQuestion] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +38,6 @@ const ForgotPassword: React.FC = () => {
 
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
       const apiClient = getApiClient();
@@ -50,17 +46,13 @@ const ForgotPassword: React.FC = () => {
       });
 
       if (response.data.success) {
-        setSuccess('Password reset token has been generated. Please proceed to reset your password.');
-        
-        // Auto-navigate to reset password page after 2 seconds
-        setTimeout(() => {
-          navigate('/reset-password', { 
-            state: { 
-              email: formData.email,
-              resetToken: response.data.resetToken 
-            } 
-          });
-        }, 2000);
+        // Navigate directly to reset password page
+        navigate('/reset-password', { 
+          state: { 
+            email: formData.email,
+            resetToken: response.data.resetToken 
+          } 
+        });
       } else {
         setError(response.data.message || 'Failed to process request');
       }
@@ -82,10 +74,8 @@ const ForgotPassword: React.FC = () => {
         </p>
         
         {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
         
-        {!success && (
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <input
@@ -103,7 +93,6 @@ const ForgotPassword: React.FC = () => {
               {loading ? 'Processing...' : 'Continue'}
             </button>
           </form>
-        )}
 
         <p className="auth-link">
           Remember your password? <a href="/login">Back to Login</a>
