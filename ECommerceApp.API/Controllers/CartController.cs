@@ -21,7 +21,7 @@ public class CartController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirst("id");
         return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
     }
 
