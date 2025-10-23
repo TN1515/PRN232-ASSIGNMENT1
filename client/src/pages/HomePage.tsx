@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
+import { loadingConfig } from '../config/loadingConfig';
 import { Product } from '../types/Product';
 import ProductCard from '../components/ProductCard';
 import Pagination from '../components/Pagination';
@@ -36,11 +37,24 @@ const HomePage: React.FC = () => {
   } = {}) => {
     try {
       setLoading(true);
+      
+      // Minimum loading time for better UX - ensures loading spinner shows for at least the configured time
+      const startTime = Date.now();
+      
       const response = await productService.searchProducts({
         ...params,
         page: params.page || currentPage,
         pageSize: itemsPerPage
       });
+      
+      // Calculate remaining delay to meet minimum loading time
+      const elapsedTime = Date.now() - startTime;
+      const remainingDelay = Math.max(0, loadingConfig.MINIMUM_LOADING_TIME - elapsedTime);
+      
+      // Wait for remaining time to ensure minimum loading duration
+      if (remainingDelay > 0) {
+        await new Promise(resolve => setTimeout(resolve, remainingDelay));
+      }
       
       setProducts(response.products);
       setTotalPages(response.pagination.totalPages);
@@ -144,6 +158,7 @@ const HomePage: React.FC = () => {
       <div className="loading">
         <div className="spinner"></div>
         <p>Loading products...</p>
+        <div className="loading-subtext">Please wait while we fetch the latest collection</div>
       </div>
     );
   }
@@ -157,17 +172,21 @@ const HomePage: React.FC = () => {
   if (error) {
     return (
       <div className="error">
+        <div className="error-icon">⚠️</div>
         <p>{error}</p>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-          <button onClick={() => fetchProducts()} className="btn btn-primary">
-            Try Again
+        <div className="error-subtext">
+          It looks like we're having trouble connecting. Please check your internet connection and try again.
+        </div>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => fetchProducts()} className="btn btn-primary" style={{ minWidth: '120px' }}>
+            🔄 Try Again
           </button>
-          <button onClick={handleTestConnection} className="btn btn-secondary">
-            Test Connection
+          <button onClick={handleTestConnection} className="btn btn-secondary" style={{ minWidth: '120px' }}>
+            🔗 Test Connection
           </button>
         </div>
-        <div style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
-          <p>Check browser console for debug information</p>
+        <div style={{ marginTop: '20px', fontSize: '12px', color: '#999' }}>
+          <p>Check browser console (F12) for debug information</p>
         </div>
       </div>
     );
