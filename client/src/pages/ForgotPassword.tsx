@@ -9,6 +9,7 @@ const ForgotPassword: React.FC = () => {
     email: '',
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -30,7 +31,7 @@ const ForgotPassword: React.FC = () => {
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     if (!emailRegex.test(formData.email)) {
       setError('Please enter a valid email address');
       return;
@@ -38,6 +39,7 @@ const ForgotPassword: React.FC = () => {
 
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
       const apiClient = getApiClient();
@@ -46,13 +48,16 @@ const ForgotPassword: React.FC = () => {
       });
 
       if (response.data.success) {
-        // Navigate directly to reset password page
-        navigate('/reset-password', { 
-          state: { 
-            email: formData.email,
-            resetToken: response.data.resetToken 
-          } 
-        });
+        // ✅ Security fix: No longer receiving reset token in response
+        // Token will be sent via email (in production)
+        // For testing, we show a success message
+        setSuccess('Check your email for password reset instructions');
+        
+        // Clear form after 3 seconds
+        setTimeout(() => {
+          setFormData({ email: '' });
+          navigate('/login');
+        }, 3000);
       } else {
         setError(response.data.message || 'Failed to process request');
       }
@@ -74,8 +79,10 @@ const ForgotPassword: React.FC = () => {
         </p>
         
         {error && <div className="error-message">{error}</div>}
+        {success && <div className="success-message">{success}</div>}
         
-        <form onSubmit={handleSubmit}>
+        {!success && (
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="email">Email Address</label>
               <input
@@ -90,9 +97,10 @@ const ForgotPassword: React.FC = () => {
             </div>
 
             <button type="submit" className="btn btn-submit" disabled={loading}>
-              {loading ? 'Processing...' : 'Continue'}
+              {loading ? 'Processing...' : 'Send Reset Link'}
             </button>
           </form>
+        )}
 
         <p className="auth-link">
           Remember your password? <a href="/login">Back to Login</a>

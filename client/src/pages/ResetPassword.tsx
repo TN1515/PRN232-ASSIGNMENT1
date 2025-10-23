@@ -6,7 +6,6 @@ import { getApiUrl } from '../config/apiConfig';
 import '../styles/Auth.css';
 
 const ResetPassword: React.FC = () => {
-  const [email, setEmail] = useState('');
   const [formData, setFormData] = useState({
     token: '',
     newPassword: '',
@@ -17,32 +16,29 @@ const ResetPassword: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [step, setStep] = useState<'email' | 'password'>('password'); // 'email' or 'password'
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
 
   useEffect(() => {
-    // Get token from URL params or location state
+    // ✅ SECURITY FIX: Get token from URL query parameter (from email link)
+    // Never store sensitive tokens in React state or navigation state
     const tokenFromUrl = searchParams.get('token');
-    const tokenFromState = location.state?.resetToken;
-    const emailFromState = location.state?.email;
     
-    if (tokenFromUrl || tokenFromState) {
+    if (tokenFromUrl) {
       setFormData(prev => ({
         ...prev,
-        token: tokenFromUrl || tokenFromState || ''
+        token: tokenFromUrl
       }));
-      if (emailFromState) {
-        setEmail(emailFromState);
-      }
-      setStep('password');
     } else {
-      // If no token is provided, show email input first
-      setStep('email');
+      // If no token is provided, redirect back to forgot password
+      console.warn('No reset token provided in URL');
+      setTimeout(() => {
+        navigate('/forgot-password');
+      }, 2000);
     }
-  }, [searchParams, location.state, navigate]);
+  }, [searchParams, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -53,66 +49,12 @@ const ResetPassword: React.FC = () => {
     setError('');
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    setError('');
-  };
-
-  // Handle email submission to get reset token
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email.trim()) {
-      setError('Email is required');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const apiClient = getApiClient();
-      const response = await apiClient.post(getApiUrl('/auth/forgot-password'), {
-        email: email,
-      });
-
-      if (response.data.success) {
-        setSuccess('Reset token generated. Please proceed to reset your password.');
-        setFormData(prev => ({
-          ...prev,
-          token: response.data.resetToken
-        }));
-        
-        // Auto-switch to password form after 1 second
-        setTimeout(() => {
-          setStep('password');
-          setSuccess('');
-        }, 1000);
-      } else {
-        setError(response.data.message || 'Failed to process request');
-      }
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.response?.data?.Message || 'An error occurred. Please try again.';
-      setError(errorMessage);
-      console.error('Forgot password error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate inputs
     if (!formData.token.trim()) {
-      setError('Reset token is missing. Please restart the process.');
+      setError('Reset token is missing. Please start from forgot password page.');
       return;
     }
 
@@ -168,18 +110,6 @@ const ResetPassword: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleBackToEmail = () => {
-    setStep('email');
-    setFormData(prev => ({
-      ...prev,
-      token: '',
-      newPassword: '',
-      confirmPassword: ''
-    }));
-    setError('');
-    setSuccess('');
   };
 
   return (

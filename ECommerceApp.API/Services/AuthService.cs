@@ -223,11 +223,13 @@ public class AuthService : IAuthService
 
             _logger.LogInformation($"Password reset token generated for user: {user.Email}");
 
+            // ✅ SECURITY FIX: Don't expose reset token in response
+            // In production, token should be sent via email
             return new ForgotPasswordResponse
             {
                 Success = true,
-                Message = "Password reset token generated successfully",
-                ResetToken = resetToken // In production, this should be sent via email
+                Message = "If the email exists in our system, a password reset link will be sent to it",
+                ResetToken = null  // ✅ Not exposed for security
             };
         }
         catch (Exception ex)

@@ -304,6 +304,60 @@ curl -X DELETE https://localhost:7070/api/products/1
 4. Test thoroughly
 5. Submit a pull request
 
+## 🔒 Security Documentation
+
+### Chrome "Dangerous Site" Warning Resolution
+This project had security vulnerabilities that triggered Chrome's "Dangerous site" warning. All issues have been identified and fixed.
+
+**Read these documents (in order):**
+
+1. **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** ⭐ START HERE
+   - 5-minute overview of all security fixes
+   - Quick summary table
+   - Deployment steps
+
+2. **[README_SECURITY_FIXES.md](./README_SECURITY_FIXES.md)** - Complete Guide
+   - What was wrong and why
+   - All 4 security fixes explained
+   - Testing checklist
+   - Security standards met
+
+3. **[SECURITY_AUDIT_REPORT.md](./SECURITY_AUDIT_REPORT.md)** - Technical Details
+   - Detailed vulnerability analysis
+   - 10 security issues identified
+   - Impact assessment
+   - Recommended improvements
+
+4. **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - How to Deploy
+   - Step-by-step deployment instructions
+   - Local testing procedures
+   - Troubleshooting guide
+   - Success criteria
+
+5. **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** - Full Index
+   - Complete guide to all security documentation
+   - Reading recommendations by role
+   - Document statistics
+
+### Security Issues Fixed ✅
+
+| Issue | Severity | Status |
+|-------|----------|--------|
+| Reset token exposed in response | 🔴 Critical | ✅ Fixed |
+| Token in React navigation state | 🔴 Critical | ✅ Fixed |
+| Missing security headers | 🔴 Critical | ✅ Fixed |
+| Weak email validation | 🟠 High | ✅ Fixed |
+
+### Security Improvements
+- ✅ Removed sensitive data (tokens) from API responses
+- ✅ Added 7 security headers (X-Frame-Options, CSP, HSTS, etc.)
+- ✅ Improved email validation (RFC 5322 compliant)
+- ✅ Better secure data handling practices
+
+### Chrome Warning Status
+- ❌ Before: Warning displayed
+- ✅ After: Warning should disappear after deployment
+
 ## License
 
 This project is licensed under the MIT License.

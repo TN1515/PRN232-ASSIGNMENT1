@@ -46,8 +46,9 @@ const Register: React.FC = () => {
       return;
     }
 
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // ✅ SECURITY FIX: Better email validation
+    // RFC 5322 simplified regex - more accurate than basic validation
+    const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
     if (!emailRegex.test(formData.email)) {
       setError('Please enter a valid email address');
       return;

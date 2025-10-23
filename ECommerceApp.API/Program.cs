@@ -119,6 +119,36 @@ else
     app.UseHttpsRedirection();
 }
 
+// ✅ SECURITY FIX: Add security headers middleware
+app.Use(async (context, next) =>
+{
+    // Prevent MIME type sniffing
+    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+    
+    // Prevent clickjacking attacks
+    context.Response.Headers.Add("X-Frame-Options", "DENY");
+    
+    // Enable XSS protection in older browsers
+    context.Response.Headers.Add("X-XSS-Protection", "1; mode=block");
+    
+    // HSTS for production
+    if (!app.Environment.IsDevelopment())
+    {
+        context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    }
+    
+    // Content Security Policy - Basic protection
+    context.Response.Headers.Add("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;");
+    
+    // Referrer Policy
+    context.Response.Headers.Add("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    // Permissions Policy (formerly Feature Policy)
+    context.Response.Headers.Add("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+    
+    await next();
+});
+
 // Use CORS middleware
 app.UseCors("AllowReactApp");
 
