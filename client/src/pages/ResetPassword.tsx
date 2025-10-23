@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { getApiUrl } from '../config/apiConfig';
 import '../styles/Auth.css';
 
 const ResetPassword: React.FC = () => {
@@ -77,7 +78,7 @@ const ResetPassword: React.FC = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+      const response = await axios.post(getApiUrl('/auth/reset-password'), {
         token: formData.token,
         newPassword: formData.newPassword,
         confirmPassword: formData.confirmPassword,

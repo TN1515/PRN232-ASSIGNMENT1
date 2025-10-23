@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { getApiUrl } from '../config/apiConfig';
 import '../styles/Auth.css';
 
 const ForgotPassword: React.FC = () => {
@@ -43,7 +44,7 @@ const ForgotPassword: React.FC = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
+      const response = await axios.post(getApiUrl('/auth/forgot-password'), {
         email: formData.email,
       });
 
