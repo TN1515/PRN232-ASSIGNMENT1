@@ -21,6 +21,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<OrderItem> OrderItems { get; set; }
 
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -192,5 +194,31 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // ✅ SECURITY: Password Reset Token configuration
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(prt => prt.Id);
+            entity.Property(prt => prt.UserId).IsRequired();
+            entity.Property(prt => prt.Token).IsRequired().HasMaxLength(256);  // SHA256 base64 encoded
+            entity.Property(prt => prt.CreatedAt).IsRequired();
+            entity.Property(prt => prt.ExpiresAt).IsRequired();
+            entity.Property(prt => prt.IsUsed).IsRequired().HasDefaultValue(false);
+            entity.Property(prt => prt.Attempts).IsRequired().HasDefaultValue(0);
+
+            // PostgreSQL specific configurations
+            entity.Property(prt => prt.Id).UseIdentityColumn();
+
+            // Foreign key relationship
+            entity.HasOne(prt => prt.User)
+                  .WithMany(u => u.PasswordResetTokens)
+                  .HasForeignKey(prt => prt.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            // Indexes for performance
+            entity.HasIndex(prt => prt.Token).IsUnique();
+            entity.HasIndex(prt => prt.UserId);
+            entity.HasIndex(prt => prt.ExpiresAt);
+            entity.HasIndex(prt => prt.IsUsed);
+        });
     }
 }

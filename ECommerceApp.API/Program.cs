@@ -45,6 +45,8 @@ builder.Services.AddAuthentication(x =>
 
 // Add custom services
 builder.Services.AddScoped<IAuthService, AuthService>();
+// ✅ SECURITY: Register password reset service with enhanced security features
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 
 // Add Entity Framework with PostgreSQL ONLY - No SQLite fallback
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

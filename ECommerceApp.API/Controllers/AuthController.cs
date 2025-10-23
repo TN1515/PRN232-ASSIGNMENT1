@@ -9,11 +9,17 @@ namespace ECommerceApp.API.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    // ✅ SECURITY: Inject password reset service with advanced security features
+    private readonly IPasswordResetService _passwordResetService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(
+        IAuthService authService,
+        IPasswordResetService passwordResetService,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
+        _passwordResetService = passwordResetService;
         _logger = logger;
     }
 
@@ -103,47 +109,65 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Request password reset
+    /// Request password reset - Uses advanced security with rate limiting
+    /// Returns same response regardless of email existence to prevent enumeration attacks
     /// </summary>
     [HttpPost("forgot-password")]
-    public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword(ForgotPasswordRequest request)
+    public async Task<ActionResult<Services.PasswordResetResponse>> ForgotPassword(ForgotPasswordRequest request)
     {
         try
         {
             _logger.LogInformation($"Forgot password request for email: {request.Email}");
-            var response = await _authService.ForgotPasswordAsync(request);
             
+            // Use new security-enhanced service
+            var response = await _passwordResetService.RequestPasswordResetAsync(request.Email);
+            
+            // Always return 200 OK to prevent email enumeration
             return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ForgotPassword endpoint");
-            return StatusCode(500, new { message = "An error occurred" });
+            // Still return 200 OK to prevent enumeration
+            return Ok(new Services.PasswordResetResponse
+            {
+                Success = true,
+                Message = "If an account with that email exists, a password reset link has been sent."
+            });
         }
     }
 
     /// <summary>
-    /// Reset password with token
+    /// Reset password with token - Uses advanced security validation
+    /// Validates token expiration, single-use, and brute-force protection
     /// </summary>
     [HttpPost("reset-password")]
-    public async Task<ActionResult<AuthResponse>> ResetPassword(ResetPasswordRequest request)
+    public async Task<ActionResult<Services.PasswordResetResponse>> ResetPassword(ResetPasswordRequest request)
     {
         try
         {
-            _logger.LogInformation($"Reset password request with token: {request.Token?.Substring(0, Math.Min(10, request.Token?.Length ?? 0))}...");
-            var response = await _authService.ResetPasswordAsync(request);
+            if (string.IsNullOrEmpty(request.Token))
+            {
+                return BadRequest(new { message = "Token is required" });
+            }
+
+            _logger.LogInformation($"Reset password request with token (first 10 chars): {request.Token.Substring(0, Math.Min(10, request.Token.Length))}...");
+            
+            // Use new security-enhanced service
+            var response = await _passwordResetService.ResetPasswordAsync(request.Token, request.NewPassword, request.ConfirmPassword);
             
             if (!response.Success)
             {
                 return BadRequest(response);
             }
 
+            // Response includes user and token from the service
             return Ok(response);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in ResetPassword endpoint");
-            return StatusCode(500, new { message = "An error occurred" });
+            return StatusCode(500, new { message = "An error occurred during password reset" });
         }
     }
 }
