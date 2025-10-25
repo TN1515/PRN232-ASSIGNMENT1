@@ -1,67 +1,15 @@
 import axios from 'axios';
 import { Product } from '../types/Product';
+import { API_BASE_URL } from '../config/apiConfig';
 
-// Smart API URL detection with fallback options
-const getApiBaseUrl = () => {
-  // Check if we're running in production environment
-  if (process.env.NODE_ENV === 'production' || 
-      window.location.hostname.includes('vercel.app') || 
-      window.location.hostname.includes('netlify.app')) {
-    
-    // Try multiple production URLs in order of preference
-    const productionUrls = [
-      process.env.REACT_APP_API_URL_PRODUCTION,
-      'https://prn232-assignment1-kcez.onrender.com/api',
-      'https://prn232-assignment1-kcez.onrender.com'
-    ].filter(Boolean);
-    
-    return productionUrls[0] || 'https://prn232-assignment1-kcez.onrender.com/api';
-  }
-  
-  // Local development - ensure correct URL
-  return process.env.REACT_APP_API_URL_LOCAL || 'http://localhost:5000';
-};
-
-const RAW_API_BASE_URL = getApiBaseUrl();
-
-// Ensure API base URL is correctly formatted
-let API_BASE_URL = RAW_API_BASE_URL;
-
-// Clean up swagger URLs
-if (API_BASE_URL.includes('/swagger')) {
-  API_BASE_URL = API_BASE_URL.replace(/\/swagger\/?$/, '/api');
-}
-
-// Ensure /api suffix for base URLs that need it
-if (!API_BASE_URL.includes('/api') && !API_BASE_URL.endsWith('/')) {
-  API_BASE_URL = API_BASE_URL + '/api';
-}
-
-// Helper function to build API endpoint
-const getApiEndpoint = (path: string) => {
-  // Clean path - remove leading slash if present
-  const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-  
-  // Return clean path (baseURL already includes /api)
-  return `/${cleanPath}`;
-};
-
-// Debug logging
-console.log('=== API Configuration ===');
-console.log('Environment:', process.env.NODE_ENV);
-console.log('Hostname:', window.location.hostname);
-console.log('Raw Base URL:', RAW_API_BASE_URL);
-console.log('API Base URL:', API_BASE_URL);
-console.log('Local API URL:', process.env.REACT_APP_API_URL_LOCAL);
-console.log('Production API URL:', process.env.REACT_APP_API_URL_PRODUCTION);
-console.log('========================');
-
+// Create a single axios instance using the centralized API configuration
+// This ensures consistent URL handling across the entire application
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 30000, // 30 second timeout to handle Render.com cold starts (first request can take 10-15s)
 });
 
 // Request interceptor for logging and adding auth token
@@ -73,50 +21,51 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
-    console.log('Making request:', {
+    console.log('📤 Product API Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
-      baseURL: config.baseURL,
       fullUrl: `${config.baseURL}${config.url}`,
       hasToken: !!token,
     });
     return config;
   },
   (error) => {
-    console.error('Request error:', error);
+    console.error('❌ Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor for logging
+// Response interceptor for logging and error handling
 api.interceptors.response.use(
   (response) => {
-    console.log('✓ Response received:', {
+    console.log('✅ Product API Response:', {
       status: response.status,
-      statusText: response.statusText,
       url: response.config?.url,
-      data: typeof response.data === 'object' ? 'Object' : response.data,
+      itemsReceived: Array.isArray(response.data) ? response.data.length : 
+                     response.data?.products?.length || 'N/A',
     });
     return response;
   },
   (error) => {
-    console.error('✗ Response error:', {
+    console.error('❌ Product API Error:', {
       message: error.message,
       code: error.code,
       status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
       url: error.config?.url,
-      stack: error.stack?.split('\n')[0],
     });
     
-    // Provide helpful error messages for common CORS issues
-    if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
-      console.error('🔥 NETWORK ERROR - Possible causes:');
+    // Provide helpful error messages for common issues
+    if (error.code === 'ERR_NETWORK') {
+      console.error('🔥 NETWORK ERROR - API might be down or unreachable');
+      console.error('Possible causes:');
       console.error('1. Backend server is not running');
       console.error('2. CORS configuration issue');
-      console.error('3. Invalid API URL');
-      console.error('4. Firewall blocking request');
+      console.error('3. Invalid API URL configuration');
+    }
+    
+    if (error.code === 'ECONNABORTED') {
+      console.error('🔥 CONNECTION TIMEOUT - API took too long to respond (>30s)');
+      console.error('This can happen on Render.com cold starts');
     }
     
     return Promise.reject(error);
@@ -141,26 +90,12 @@ export const productService = {
   // Test API connection
   testConnection: async (): Promise<boolean> => {
     try {
-      // Try different endpoints to test connectivity
-      const endpoints = [
-        getApiEndpoint('/products'),
-        '/products',
-        'products'
-      ];
-      
-      for (const endpoint of endpoints) {
-        try {
-          console.log(`Testing endpoint: ${API_BASE_URL}${endpoint}`);
-          await api.get(endpoint);
-          console.log(`✓ Successfully connected to: ${endpoint}`);
-          return true;
-        } catch (error: any) {
-          console.log(`✗ Failed to connect to: ${endpoint} - ${error.message}`);
-        }
-      }
-      return false;
-    } catch (error) {
-      console.error('Connection test failed:', error);
+      console.log('Testing API connection to:', API_BASE_URL + '/products');
+      await api.get('/products');
+      console.log('✅ API connection successful');
+      return true;
+    } catch (error: any) {
+      console.error('❌ API connection failed:', error.message);
       return false;
     }
   },
@@ -168,24 +103,14 @@ export const productService = {
   // Get all products (legacy method for compatibility)
   getAllProducts: async (): Promise<Product[]> => {
     try {
-      console.log('Fetching products from:', API_BASE_URL + getApiEndpoint('/products'));
-      const response = await api.get(getApiEndpoint('/products'));
-      console.log('API Response:', response.data);
+      console.log('Fetching all products from:', API_BASE_URL + '/products');
+      const response = await api.get('/products');
       
       // Handle both old and new response format
       return Array.isArray(response.data) ? response.data : response.data.products;
     } catch (error: any) {
-      console.error('Failed to fetch products from primary endpoint:', error);
-      
-      // Try alternative endpoint
-      try {
-        console.log('Trying alternative endpoint...');
-        const altResponse = await api.get(getApiEndpoint('/products'));
-        return Array.isArray(altResponse.data) ? altResponse.data : altResponse.data.products;
-      } catch (altError: any) {
-        console.error('Alternative endpoint also failed:', altError);
-        throw new Error(`Failed to fetch products: ${error.message}`);
-      }
+      console.error('Failed to fetch products:', error);
+      throw new Error(`Failed to fetch products: ${error.message}`);
     }
   },
 
@@ -206,33 +131,61 @@ export const productService = {
       if (params.page) queryParams.append('page', params.page.toString());
       if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
       
-      const response = await api.get(getApiEndpoint(`/products?${queryParams.toString()}`));
+      const queryString = queryParams.toString();
+      const endpoint = queryString ? `/products?${queryString}` : '/products';
+      
+      console.log('🔍 Searching products:', { endpoint, params });
+      const response = await api.get(endpoint);
       return response.data;
     } catch (error: any) {
-      console.error('Search products failed:', error);
+      console.error('❌ Search products failed:', error);
       throw error;
     }
   },
 
   // Get single product
   getProduct: async (id: number): Promise<Product> => {
-    const response = await api.get(getApiEndpoint(`/products/${id}`));
-    return response.data;
+    try {
+      console.log('📦 Fetching product:', id);
+      const response = await api.get(`/products/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error(`❌ Failed to fetch product ${id}:`, error);
+      throw error;
+    }
   },
 
   // Create product
   createProduct: async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> => {
-    const response = await api.post(getApiEndpoint('/products'), product);
-    return response.data;
+    try {
+      console.log('➕ Creating product:', product);
+      const response = await api.post('/products', product);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Failed to create product:', error);
+      throw error;
+    }
   },
 
   // Update product
   updateProduct: async (id: number, product: Omit<Product, 'createdAt' | 'updatedAt'>): Promise<void> => {
-    await api.put(getApiEndpoint(`/products/${id}`), product);
+    try {
+      console.log('✏️ Updating product:', id, product);
+      await api.put(`/products/${id}`, product);
+    } catch (error: any) {
+      console.error(`❌ Failed to update product ${id}:`, error);
+      throw error;
+    }
   },
 
   // Delete product
   deleteProduct: async (id: number): Promise<void> => {
-    await api.delete(getApiEndpoint(`/products/${id}`));
+    try {
+      console.log('🗑️ Deleting product:', id);
+      await api.delete(`/products/${id}`);
+    } catch (error: any) {
+      console.error(`❌ Failed to delete product ${id}:`, error);
+      throw error;
+    }
   },
 };
