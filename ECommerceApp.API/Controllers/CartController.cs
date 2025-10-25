@@ -104,13 +104,16 @@ public class CartController : ControllerBase
         }
 
         var existingItem = cart.CartItems.FirstOrDefault(ci => ci.ProductId == dto.ProductId);
+        CartItem cartItem;
+        
         if (existingItem != null)
         {
             existingItem.Quantity += dto.Quantity;
+            cartItem = existingItem;
         }
         else
         {
-            var cartItem = new CartItem
+            cartItem = new CartItem
             {
                 CartId = cart.Id,
                 ProductId = dto.ProductId,
@@ -124,7 +127,23 @@ public class CartController : ControllerBase
         cart.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Item added to cart successfully" });
+        // Return the cart item with product details
+        return Ok(new
+        {
+            id = cartItem.Id,
+            cartId = cartItem.CartId,
+            productId = cartItem.ProductId,
+            product = new
+            {
+                id = product.Id,
+                name = product.Name,
+                price = product.Price,
+                image = product.Image
+            },
+            quantity = cartItem.Quantity,
+            unitPrice = cartItem.UnitPrice,
+            addedAt = cartItem.AddedAt
+        });
     }
 
     /// <summary>

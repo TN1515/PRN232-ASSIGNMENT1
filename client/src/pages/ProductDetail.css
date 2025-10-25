@@ -123,18 +123,6 @@
   position: relative;
 }
 
-.product-price-large::before {
-  content: '$';
-  position: absolute;
-  left: -1.2rem;
-  font-size: 1.8rem;
-  top: 0.3rem;
-  background: inherit;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .product-description-full h3 {
   color: #4a5568;
   margin-bottom: 1.25rem;

@@ -18,9 +18,13 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
- * Validate token by checking if it can access the /me endpoint
+ * Validate token by checking if it can access the /me endpoint.
+ * Returns:
+ *  - 'valid' when token is accepted (2xx)
+ *  - 'unauthorized' when server returns 401
+ *  - 'error' for network/other transient errors (do NOT clear auth on these)
  */
-const validateToken = async (token: string): Promise<boolean> => {
+const validateToken = async (token: string): Promise<'valid' | 'unauthorized' | 'error'> => {
   try {
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
       method: 'GET',
@@ -29,10 +33,15 @@ const validateToken = async (token: string): Promise<boolean> => {
         'Content-Type': 'application/json'
       }
     });
-    return response.ok;
+
+    if (response.status === 401) return 'unauthorized';
+    if (response.ok) return 'valid';
+    // Other non-OK responses (e.g., 5xx) treat as transient error
+    console.warn('Token validation returned non-OK status:', response.status);
+    return 'error';
   } catch (error) {
-    console.warn('Token validation failed:', error);
-    return false;
+    console.warn('Token validation failed (network/error):', error);
+    return 'error';
   }
 };
 
@@ -41,37 +50,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth state from localStorage and validate token
+  // Initialize auth state from localStorage without auto-validation
+  // This ensures app loads with no user logged in by default
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-
-        if (storedToken && storedUser) {
-          // Validate the token before setting it
-          const isValid = await validateToken(storedToken);
-          
-          if (isValid) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-            console.log('✅ Token validated and user restored from localStorage');
-          } else {
-            // Token is invalid or expired, clear localStorage
-            console.warn('❌ Token validation failed - clearing authentication');
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            setToken(null);
-            setUser(null);
-          }
-        }
-      } catch (error) {
-        console.error('Error during auth initialization:', error);
-        // On error, clear potentially corrupted auth data
+        // Don't restore from localStorage - start as logged out
+        // Token validation will only happen when explicitly needed (e.g., on protected pages)
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setToken(null);
         setUser(null);
+        console.log('ℹ️ App initialized with no user logged in (auto-validation disabled)');
+      } catch (error) {
+        console.error('Error during auth initialization:', error);
       } finally {
         setIsLoading(false);
       }

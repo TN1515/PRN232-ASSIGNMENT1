@@ -19,7 +19,7 @@ export const apiDiagnostics = async () => {
   // 2. Check API Configuration
   console.log('%c⚙️ API Configuration', 'color: green; font-weight: bold;');
   try {
-    const { API_BASE_URL, getApiUrl, debugApiConfig } = await import('../config/apiConfig');
+    const { API_BASE_URL, getApiUrl } = await import('../config/apiConfig');
     console.log('API Base URL:', API_BASE_URL);
     console.log('Example Product URL:', getApiUrl('/products'));
     console.log('Example Auth URL:', getApiUrl('/auth/login'));

@@ -20,8 +20,20 @@ public class OrderController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
+        var userIdClaim = User.FindFirst("id");
+        if (userIdClaim != null)
+        {
+            if (int.TryParse(userIdClaim.Value, out var userId))
+            {
+                return userId;
+            }
+        }
+        
+        // Log for debugging
+        var allClaims = User.Claims.Select(c => $"{c.Type}:{c.Value}").ToList();
+        System.Diagnostics.Debug.WriteLine($"❌ GetCurrentUserId failed. Available claims: {string.Join(", ", allClaims)}");
+        
+        return 0;
     }
 
     /// <summary>
@@ -31,37 +43,52 @@ public class OrderController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetUserOrders()
     {
-        var userId = GetCurrentUserId();
-        if (userId == 0)
-            return Unauthorized(new { message = "User not found" });
-
-        var orders = await _context.Orders
-            .Where(o => o.UserId == userId)
-            .Include(o => o.OrderItems)
-            .ThenInclude(oi => oi.Product)
-            .OrderByDescending(o => o.OrderDate)
-            .ToListAsync();
-
-        return Ok(orders.Select(o => new
+        try
         {
-            id = o.Id,
-            orderNumber = o.OrderNumber,
-            status = o.Status.ToString(),
-            totalAmount = o.TotalAmount,
-            items = o.OrderItems.Select(oi => new
+            var userId = GetCurrentUserId();
+            System.Diagnostics.Debug.WriteLine($"📥 GetUserOrders called. Extracted UserId: {userId}");
+            
+            if (userId == 0)
             {
-                id = oi.Id,
-                productId = oi.ProductId,
-                productName = oi.Product.Name,
-                quantity = oi.Quantity,
-                unitPrice = oi.UnitPrice,
-                subtotal = oi.Quantity * oi.UnitPrice
-            }).ToList(),
-            orderDate = o.OrderDate,
-            paidDate = o.PaidDate,
-            shippedDate = o.ShippedDate,
-            deliveredDate = o.DeliveredDate
-        }).ToList());
+                System.Diagnostics.Debug.WriteLine($"❌ GetUserOrders failed: userId is 0");
+                return Unauthorized(new { message = "User not found" });
+            }
+
+            var orders = await _context.Orders
+                .Where(o => o.UserId == userId)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            System.Diagnostics.Debug.WriteLine($"✅ GetUserOrders succeeded. Found {orders.Count} orders for userId {userId}");
+
+            return Ok(orders.Select(o => new
+            {
+                id = o.Id,
+                orderNumber = o.OrderNumber,
+                status = o.Status.ToString(),
+                totalAmount = o.TotalAmount,
+                items = o.OrderItems.Select(oi => new
+                {
+                    id = oi.Id,
+                    productId = oi.ProductId,
+                    productName = oi.Product.Name,
+                    quantity = oi.Quantity,
+                    unitPrice = oi.UnitPrice,
+                    subtotal = oi.Quantity * oi.UnitPrice
+                }).ToList(),
+                orderDate = o.OrderDate,
+                paidDate = o.PaidDate,
+                shippedDate = o.ShippedDate,
+                deliveredDate = o.DeliveredDate
+            }).ToList());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ GetUserOrders exception: {ex.Message}");
+            return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -112,60 +139,72 @@ public class OrderController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateOrder()
     {
-        var userId = GetCurrentUserId();
-        if (userId == 0)
-            return Unauthorized(new { message = "User not found" });
-
-        var cart = await _context.Carts
-            .Include(c => c.CartItems)
-            .ThenInclude(ci => ci.Product)
-            .FirstOrDefaultAsync(c => c.UserId == userId);
-
-        if (cart == null || !cart.CartItems.Any())
-            return BadRequest(new { message = "Cart is empty" });
-
-        // Create order
-        var order = new Order
+        try
         {
-            UserId = userId,
-            OrderNumber = "ORD" + DateTime.UtcNow.Ticks,
-            TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.UnitPrice),
-            Status = OrderStatus.Pending,
-            OrderDate = DateTime.UtcNow
-        };
+            var userId = GetCurrentUserId();
+            if (userId == 0)
+                return Unauthorized(new { message = "User not found" });
 
-        // Create order items from cart items
-        foreach (var cartItem in cart.CartItems)
-        {
-            var orderItem = new OrderItem
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Product)
+                .FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (cart == null || !cart.CartItems.Any())
+                return BadRequest(new { message = "Cart is empty" });
+
+            // Create order
+            var order = new Order
             {
-                ProductId = cartItem.ProductId,
-                Quantity = cartItem.Quantity,
-                UnitPrice = cartItem.UnitPrice
+                UserId = userId,
+                OrderNumber = "ORD" + DateTime.UtcNow.Ticks,
+                TotalAmount = cart.CartItems.Sum(ci => ci.Quantity * ci.UnitPrice),
+                Status = OrderStatus.Pending,
+                OrderDate = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
-            order.OrderItems.Add(orderItem);
-        }
 
-        _context.Orders.Add(order);
-
-        // Clear cart
-        _context.CartItems.RemoveRange(cart.CartItems);
-        cart.UpdatedAt = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            message = "Order created successfully",
-            order = new
+            // Create order items from cart items
+            foreach (var cartItem in cart.CartItems)
             {
-                id = order.Id,
-                orderNumber = order.OrderNumber,
-                status = order.Status.ToString(),
-                totalAmount = order.TotalAmount,
-                orderDate = order.OrderDate
+                var orderItem = new OrderItem
+                {
+                    ProductId = cartItem.ProductId,
+                    Quantity = cartItem.Quantity,
+                    UnitPrice = cartItem.UnitPrice
+                };
+                order.OrderItems.Add(orderItem);
             }
-        });
+
+            _context.Orders.Add(order);
+
+            // Clear cart
+            _context.CartItems.RemoveRange(cart.CartItems);
+            cart.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                success = true,
+                message = "Order created successfully",
+                order = new
+                {
+                    id = order.Id,
+                    orderNumber = order.OrderNumber,
+                    status = order.Status.ToString(),
+                    totalAmount = order.TotalAmount,
+                    orderDate = order.OrderDate
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ CreateOrder error: {ex.Message}");
+            Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+            return StatusCode(500, new { success = false, message = "Failed to create order", error = ex.Message });
+        }
     }
 
     /// <summary>

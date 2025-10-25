@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import cartService, { Cart, CartItem } from '../services/cartService';
 import orderService from '../services/orderService';
+import { formatPriceVND } from '../utils/priceFormatter';
+import { getApiUrl } from '../config/apiConfig';
 import './Checkout.css';
 
 const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  console.log('🟢 CheckoutPage loaded - Version with PaymentController fix');
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   // Checkout form state
   const [formData, setFormData] = useState({
@@ -24,27 +26,15 @@ const CheckoutPage: React.FC = () => {
     city: '',
     state: '',
     zipCode: '',
-    cardNumber: '',
-    cardExpiry: '',
-    cardCVV: '',
   });
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    
-    loadCart();
-  }, [user, navigate]);
-
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const cartData = await cartService.getCart();
       
-      if (!cartData || cartData.cartItems.length === 0) {
+      if (!cartData || cartData.items.length === 0) {
         setError('Your cart is empty');
         setTimeout(() => navigate('/cart'), 2000);
         return;
@@ -57,7 +47,16 @@ const CheckoutPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    loadCart();
+  }, [user, navigate, loadCart]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -92,18 +91,6 @@ const CheckoutPage: React.FC = () => {
       setError('ZIP code is required');
       return false;
     }
-    if (!formData.cardNumber.replace(/\s/g, '').match(/^\d{13,19}$/)) {
-      setError('Valid card number is required');
-      return false;
-    }
-    if (!formData.cardExpiry.match(/^\d{2}\/\d{2}$/)) {
-      setError('Card expiry must be in MM/YY format');
-      return false;
-    }
-    if (!formData.cardCVV.match(/^\d{3,4}$/)) {
-      setError('Valid CVV is required');
-      return false;
-    }
     return true;
   };
 
@@ -118,27 +105,77 @@ const CheckoutPage: React.FC = () => {
       setPlacing(true);
       setError(null);
       
-      // Place the order
-      const result = await orderService.placeOrder();
+      // First, create the order
+      console.log('📦 Creating order...');
+      const orderResult = await orderService.placeOrder();
+      console.log('📦 Order result:', orderResult);
       
-      if (result.success) {
-        setSuccess(true);
-        // Redirect to orders page after 2 seconds
-        setTimeout(() => {
-          navigate('/orders', { 
-            state: { 
-              message: 'Order placed successfully!',
-              orderNumber: result.order?.orderNumber 
-            } 
-          });
-        }, 2000);
+      if (!orderResult.success || !orderResult.order) {
+        console.error('❌ Order creation failed:', orderResult);
+        setError(orderResult.message || 'Failed to create order');
+        setPlacing(false);
+        return;
+      }
+
+      const orderId = orderResult.order.id;
+      const cartTotal = cartService.calculateCartTotal(cart?.items || []);
+      const tax = cartTotal * 0.1;
+      const total = Math.round((cartTotal + tax) * 1000); // Convert to VND and multiply by 1000 for PayOS
+
+      console.log('📦 Creating PayOS payment:', {
+        orderId,
+        amount: total,
+        description: `Order #${orderResult.order.orderNumber}`,
+        orderInfo: `Payment for order ${orderResult.order.orderNumber}`,
+        buyerName: `${formData.firstName} ${formData.lastName}`,
+        buyerEmail: formData.email,
+        buyerPhone: formData.phone,
+        buyerAddress: `${formData.address}, ${formData.city}, ${formData.zipCode}`,
+      });
+
+      // Request PayOS payment link from backend
+      const paymentUrl = getApiUrl('/payment/create-payment-link');
+      console.log('🔗 Payment URL:', paymentUrl);
+      console.log('🔑 Token:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+      
+      const paymentResponse = await fetch(paymentUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          orderId: orderId,
+          amount: total,
+          orderInfo: `Payment for order ${orderResult.order.orderNumber}`,
+          buyerName: `${formData.firstName} ${formData.lastName}`,
+          buyerEmail: formData.email,
+          buyerPhone: formData.phone,
+          buyerAddress: `${formData.address}, ${formData.city}, ${formData.zipCode}`,
+          description: `Order #${orderResult.order.orderNumber}`,
+        }),
+      });
+
+      console.log('📡 Payment response status:', paymentResponse.status);
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json();
+        throw new Error(errorData.message || 'Failed to create payment link');
+      }
+
+      const paymentData = await paymentResponse.json();
+      
+      if (paymentData.checkoutUrl) {
+        // Redirect to PayOS checkout
+        console.log('✅ Redirecting to PayOS:', paymentData.checkoutUrl);
+        window.location.href = paymentData.checkoutUrl;
       } else {
-        setError(result.message || 'Failed to place order');
+        setError('Failed to get payment link');
+        setPlacing(false);
       }
     } catch (err: any) {
       console.error('Failed to place order:', err);
-      setError(err.response?.data?.message || 'Failed to place order. Please try again.');
-    } finally {
+      setError(err.message || 'Failed to place order. Please try again.');
       setPlacing(false);
     }
   };
@@ -153,7 +190,7 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
-  if (!cart || cart.cartItems.length === 0) {
+  if (!cart || cart.items.length === 0) {
     return (
       <div className="checkout-page">
         <div className="checkout-empty">
@@ -164,22 +201,9 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
-  const cartTotal = cartService.calculateCartTotal(cart.cartItems);
+  const cartTotal = cartService.calculateCartTotal(cart.items);
   const tax = cartTotal * 0.1;
   const total = cartTotal + tax;
-
-  if (success) {
-    return (
-      <div className="checkout-page">
-        <div className="checkout-success">
-          <div className="success-icon">✓</div>
-          <h2>Order Placed Successfully!</h2>
-          <p>Thank you for your purchase.</p>
-          <p>Redirecting to your orders...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="checkout-page">
@@ -187,7 +211,7 @@ const CheckoutPage: React.FC = () => {
         <div className="checkout-content">
           {/* Checkout Form */}
           <div className="checkout-form-section">
-            <h1>Checkout</h1>
+            <h1>Checkout with PayOS</h1>
             
             {error && <div className="error-message">{error}</div>}
 
@@ -246,7 +270,7 @@ const CheckoutPage: React.FC = () => {
                       value={formData.phone}
                       onChange={handleInputChange}
                       required
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="+84 123 456 789"
                     />
                   </div>
                 </div>
@@ -279,7 +303,7 @@ const CheckoutPage: React.FC = () => {
                       value={formData.city}
                       onChange={handleInputChange}
                       required
-                      placeholder="New York"
+                      placeholder="Ho Chi Minh"
                     />
                   </div>
                   
@@ -292,7 +316,7 @@ const CheckoutPage: React.FC = () => {
                       value={formData.state}
                       onChange={handleInputChange}
                       required
-                      placeholder="NY"
+                      placeholder="HCM"
                     />
                   </div>
                   
@@ -305,57 +329,7 @@ const CheckoutPage: React.FC = () => {
                       value={formData.zipCode}
                       onChange={handleInputChange}
                       required
-                      placeholder="10001"
-                    />
-                  </div>
-                </div>
-              </fieldset>
-
-              {/* Payment Information */}
-              <fieldset className="form-section">
-                <legend>Payment Information</legend>
-                
-                <div className="form-group">
-                  <label htmlFor="cardNumber">Card Number *</label>
-                  <input
-                    type="text"
-                    id="cardNumber"
-                    name="cardNumber"
-                    value={formData.cardNumber}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="1234 5678 9012 3456"
-                    maxLength={19}
-                  />
-                  <small>Use 4242 4242 4242 4242 for testing</small>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="cardExpiry">Expiry Date (MM/YY) *</label>
-                    <input
-                      type="text"
-                      id="cardExpiry"
-                      name="cardExpiry"
-                      value={formData.cardExpiry}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="12/25"
-                      maxLength={5}
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="cardCVV">CVV *</label>
-                    <input
-                      type="text"
-                      id="cardCVV"
-                      name="cardCVV"
-                      value={formData.cardCVV}
-                      onChange={handleInputChange}
-                      required
-                      placeholder="123"
-                      maxLength={4}
+                      placeholder="70000"
                     />
                   </div>
                 </div>
@@ -366,7 +340,7 @@ const CheckoutPage: React.FC = () => {
                 className="btn-place-order"
                 disabled={placing}
               >
-                {placing ? 'Placing Order...' : 'Place Order'}
+                {placing ? 'Redirecting to PayOS...' : 'Proceed to Payment'}
               </button>
             </form>
           </div>
@@ -376,18 +350,18 @@ const CheckoutPage: React.FC = () => {
             <h2>Order Summary</h2>
             
             <div className="summary-items">
-              <h3>Items</h3>
-              {cart.cartItems.map(item => (
+              <h3>Items ({cart.items.length})</h3>
+              {cart.items.map((item: CartItem) => (
                 <div key={item.id} className="summary-item-row">
                   <span className="item-name">
                     {item.product?.name} x{item.quantity}
                   </span>
                   <span className="item-price">
-                    ${(
+                    {formatPriceVND((
                       (typeof item.unitPrice === 'string' 
                         ? parseFloat(item.unitPrice) 
                         : item.unitPrice) * item.quantity
-                    ).toFixed(2)}
+                    ))}
                   </span>
                 </div>
               ))}
@@ -396,7 +370,7 @@ const CheckoutPage: React.FC = () => {
             <div className="summary-totals">
               <div className="total-row">
                 <span>Subtotal:</span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span>{formatPriceVND(cartTotal)}</span>
               </div>
               <div className="total-row">
                 <span>Shipping:</span>
@@ -404,13 +378,17 @@ const CheckoutPage: React.FC = () => {
               </div>
               <div className="total-row">
                 <span>Tax (10%):</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>{formatPriceVND(tax)}</span>
               </div>
               <div className="total-row grand-total">
                 <span>Total:</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{formatPriceVND(total)}</span>
               </div>
             </div>
+
+            <p className="payment-info">
+              💳 You will be redirected to PayOS to complete payment securely
+            </p>
 
             <button 
               className="btn-back-to-cart"

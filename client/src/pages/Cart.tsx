@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import cartService, { Cart, CartItem } from '../services/cartService';
+import { formatPriceVND } from '../utils/priceFormatter';
 import './Cart.css';
 
 const CartPage: React.FC = () => {
@@ -49,7 +50,7 @@ const CartPage: React.FC = () => {
       if (cart) {
         setCart({
           ...cart,
-          cartItems: cart.cartItems.map(item =>
+          items: cart.items.map((item: CartItem) =>
             item.id === cartItemId ? { ...item, quantity: newQuantity } : item
           ),
         });
@@ -75,7 +76,7 @@ const CartPage: React.FC = () => {
       if (cart) {
         setCart({
           ...cart,
-          cartItems: cart.cartItems.filter(item => item.id !== cartItemId),
+          items: cart.items.filter((item: CartItem) => item.id !== cartItemId),
         });
       }
     } catch (err: any) {
@@ -108,7 +109,7 @@ const CartPage: React.FC = () => {
     );
   }
 
-  if (!cart || cart.cartItems.length === 0) {
+  if (!cart || cart.items.length === 0) {
     return (
       <div className="cart-page">
         <div className="cart-empty">
@@ -122,7 +123,7 @@ const CartPage: React.FC = () => {
     );
   }
 
-  const cartTotal = cartService.calculateCartTotal(cart.cartItems);
+  const cartTotal = cartService.calculateCartTotal(cart.items);
 
   return (
     <div className="cart-page">
@@ -135,7 +136,7 @@ const CartPage: React.FC = () => {
           <div className="cart-items-section">
             <h2>Items in Cart</h2>
             <div className="cart-items-list">
-              {cart.cartItems.map(item => (
+              {cart.items.map((item: CartItem) => (
                 <div key={item.id} className="cart-item">
                   <div className="item-image">
                     {item.product?.image ? (
@@ -148,7 +149,7 @@ const CartPage: React.FC = () => {
                   <div className="item-details">
                     <h3>{item.product?.name || 'Product'}</h3>
                     <p className="item-price">
-                      ${typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice}
+                      {formatPriceVND(item.unitPrice)}
                     </p>
                   </div>
 
@@ -178,11 +179,11 @@ const CartPage: React.FC = () => {
                   </div>
 
                   <div className="item-total">
-                    ${(
+                    {formatPriceVND((
                       (typeof item.unitPrice === 'string' 
                         ? parseFloat(item.unitPrice) 
                         : item.unitPrice) * item.quantity
-                    ).toFixed(2)}
+                    ))}
                   </div>
 
                   <button
@@ -202,7 +203,7 @@ const CartPage: React.FC = () => {
             <div className="summary-items">
               <div className="summary-item">
                 <span>Subtotal:</span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span>{formatPriceVND(cartTotal)}</span>
               </div>
               <div className="summary-item">
                 <span>Shipping:</span>
@@ -210,11 +211,11 @@ const CartPage: React.FC = () => {
               </div>
               <div className="summary-item">
                 <span>Tax:</span>
-                <span>${(cartTotal * 0.1).toFixed(2)}</span>
+                <span>{formatPriceVND(cartTotal * 0.1)}</span>
               </div>
               <div className="summary-item total">
                 <span>Total:</span>
-                <span>${(cartTotal * 1.1).toFixed(2)}</span>
+                <span>{formatPriceVND(cartTotal * 1.1)}</span>
               </div>
             </div>
 

@@ -34,6 +34,11 @@ public class Order
 
     public DateTime? DeliveredDate { get; set; }
 
+    // PayOS payment info
+    public string? PayosTransactionId { get; set; }
+
+    public string? PaymentStatus { get; set; }
+
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
     public DateTime CreatedAt { get; set; }

@@ -14,10 +14,10 @@ const FilterButtons: React.FC<FilterButtonsProps> = ({
 }) => {
   const filterOptions = [
     { label: 'All Products', value: 'all', action: () => onClearFilters() },
-    { label: 'Under $30', value: 'under30', action: () => onPriceFilter(0, 30) },
-    { label: '$30 - $60', value: '30-60', action: () => onPriceFilter(30, 60) },
-    { label: '$60 - $100', value: '60-100', action: () => onPriceFilter(60, 100) },
-    { label: 'Over $100', value: 'over100', action: () => onPriceFilter(100) },
+    { label: 'Under 630K₫', value: 'under30', action: () => onPriceFilter(0, 30) },
+    { label: '630K₫ - 1.26M₫', value: '30-60', action: () => onPriceFilter(30, 60) },
+    { label: '1.26M₫ - 2.1M₫', value: '60-100', action: () => onPriceFilter(60, 100) },
+    { label: 'Over 2.1M₫', value: 'over100', action: () => onPriceFilter(100) },
   ];
 
   return (

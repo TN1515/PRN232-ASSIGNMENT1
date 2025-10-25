@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { productService } from '../services/productService';
 import cartService from '../services/cartService';
 import { Product } from '../types/Product';
+import { formatPriceVND } from '../utils/priceFormatter';
 import './ProductDetail.css';
 
 const ProductDetail: React.FC = () => {
@@ -49,7 +50,11 @@ const ProductDetail: React.FC = () => {
       await cartService.addToCart(product.id, quantity);
       setSuccess('Added to cart successfully!');
       setQuantity(1);
-      setTimeout(() => setSuccess(null), 3000);
+      
+      // Navigate to cart page after 1 second to show success message
+      setTimeout(() => {
+        navigate('/cart');
+      }, 1000);
     } catch (err: any) {
       console.error('Error adding to cart:', err);
       setError(err.response?.data?.message || 'Failed to add to cart');
@@ -133,7 +138,7 @@ const ProductDetail: React.FC = () => {
           </div>
           <div className="product-info-detailed">
             <h1>{product.name}</h1>
-            <p className="product-price-large">${product.price.toFixed(2)}</p>
+            <p className="product-price-large">{formatPriceVND(product.price)}</p>
             <div className="product-description-full">
               <h3>Description</h3>
               <p>{product.description}</p>

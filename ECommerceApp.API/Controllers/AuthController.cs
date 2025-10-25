@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using ECommerceApp.API.DTOs;
 using ECommerceApp.API.Services;
 
@@ -76,6 +77,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// Get current user (requires authentication)
     /// </summary>
+    [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<UserDto>> GetCurrentUser()
     {

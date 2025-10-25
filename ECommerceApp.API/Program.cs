@@ -154,6 +154,8 @@ app.Use(async (context, next) =>
 // Use CORS middleware
 app.UseCors("AllowReactApp");
 
+app.UseRouting();
+
 app.UseAuthentication();
 
 app.UseAuthorization();

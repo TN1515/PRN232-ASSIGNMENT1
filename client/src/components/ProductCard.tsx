@@ -2,6 +2,7 @@ import React from 'react';
 import { Product } from '../types/Product';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { formatPriceVND } from '../utils/priceFormatter';
 import './ProductCard.css';
 
 interface ProductCardProps {
@@ -35,7 +36,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onDelete }) => {
       <div className="product-info">
         <h3 className="product-name">{product.name}</h3>
         <p className="product-description">{product.description}</p>
-        <p className="product-price">${product.price.toFixed(2)}</p>
+        <p className="product-price">{formatPriceVND(product.price)}</p>
         <div className="product-actions">
           <Link to={`/products/${product.id}`} className="btn btn-primary">
             View Details

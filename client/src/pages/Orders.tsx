@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import orderService, { Order, OrderStatus } from '../services/orderService';
+import orderService, { Order } from '../services/orderService';
+import { formatPriceVND } from '../utils/priceFormatter';
 import './Orders.css';
 
 const OrdersPage: React.FC = () => {
@@ -30,15 +31,34 @@ const OrdersPage: React.FC = () => {
     }
   }, [user, navigate, successMessage]);
 
+  // Tự động xóa error sau 3 giây
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const loadOrders = async () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('📥 Loading orders...');
       const ordersList = await orderService.getUserOrders();
+      console.log('✅ Orders loaded successfully:', ordersList);
       setOrders(ordersList);
+      // Không hiển thị lỗi nếu load thành công
+      setError(null);
     } catch (err: any) {
-      console.error('Failed to load orders:', err);
-      setError(err.response?.data?.message || 'Failed to load orders');
+      console.error('❌ Failed to load orders:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        fullError: err
+      });
+      // Không set error - chỉ log ra console
+      // Hiển thị empty state thay vì error message
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -81,7 +101,7 @@ const OrdersPage: React.FC = () => {
         <h1>My Orders</h1>
         
         {success && <div className="success-message">{success}</div>}
-        {error && <div className="error-message">{error}</div>}
+        {error && error.trim() && <div className="error-message">{error}</div>}
 
         {orders.length === 0 ? (
           <div className="orders-empty">
@@ -120,12 +140,27 @@ const OrdersPage: React.FC = () => {
                         <span className="label">Items:</span>
                         <span className="value">{order.orderItems?.length || 0}</span>
                       </div>
+                      {order.orderItems && order.orderItems.length > 0 && (
+                        <div className="info-item products-list">
+                          <span className="label">Products:</span>
+                          <div className="products-info">
+                            {order.orderItems.slice(0, 3).map((item, idx) => (
+                              <span key={idx} className="product-info">
+                                {item.product?.name} (x{item.quantity})
+                              </span>
+                            ))}
+                            {order.orderItems.length > 3 && (
+                              <span className="product-info">+{order.orderItems.length - 3} more</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <div className="info-item">
                         <span className="label">Total:</span>
                         <span className="value">
-                          ${typeof order.totalAmount === 'string' 
+                          {formatPriceVND(typeof order.totalAmount === 'string' 
                             ? parseFloat(order.totalAmount) 
-                            : order.totalAmount}
+                            : order.totalAmount)}
                         </span>
                       </div>
                     </div>
@@ -209,11 +244,11 @@ const OrdersPage: React.FC = () => {
                             </div>
                           </div>
                           <div className="item-price">
-                            <p>${(
+                            <p>{formatPriceVND((
                               (typeof item.unitPrice === 'string' 
                                 ? parseFloat(item.unitPrice) 
                                 : item.unitPrice) * item.quantity
-                            ).toFixed(2)}</p>
+                            ))}</p>
                           </div>
                         </div>
                       ))}
@@ -223,9 +258,9 @@ const OrdersPage: React.FC = () => {
                   <div className="detail-section total-section">
                     <div className="total-item">
                       <span>Subtotal:</span>
-                      <strong>${typeof selectedOrder.totalAmount === 'string' 
+                      <strong>{formatPriceVND(typeof selectedOrder.totalAmount === 'string' 
                         ? parseFloat(selectedOrder.totalAmount) 
-                        : selectedOrder.totalAmount}</strong>
+                        : selectedOrder.totalAmount)}</strong>
                     </div>
                   </div>
                 </div>
