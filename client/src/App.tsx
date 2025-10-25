@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
 import ProductDetail from './pages/ProductDetail';
@@ -16,6 +16,37 @@ import './App.css';
 // Import diagnostics for debugging (available in console as window.apiDiagnostics)
 import './config/diagnostics';
 
+// ✅ FIXED: Separate component to wrap routes so they have access to useAuth
+const AppRoutes: React.FC = () => {
+  const { isLoading } = useAuth();
+
+  // ✅ Show loading state while checking if user is authenticated
+  if (isLoading) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/products/new" element={<ProductForm />} />
+      <Route path="/products/:id" element={<ProductDetail />} />
+      <Route path="/products/:id/edit" element={<ProductForm />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/orders" element={<OrdersPage />} />
+    </Routes>
+  );
+};
+
 function App() {
   return (
     <Router>
@@ -23,19 +54,7 @@ function App() {
         <div className="App">
           <Navigation />
           <main>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/products/new" element={<ProductForm />} />
-              <Route path="/products/:id" element={<ProductDetail />} />
-              <Route path="/products/:id/edit" element={<ProductForm />} />
-              <Route path="/cart" element={<CartPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/orders" element={<OrdersPage />} />
-            </Routes>
+            <AppRoutes />
           </main>
         </div>
       </AuthProvider>
